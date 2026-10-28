@@ -46,3 +46,4 @@ export class RentalStatusHistory {
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 }
+

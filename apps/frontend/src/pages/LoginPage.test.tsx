@@ -20,3 +20,4 @@ describe('LoginPage Component', () => {
     expect(screen.getByText(/Tài khoản demo thử nghiệm/i)).toBeInTheDocument();
   });
 });
+

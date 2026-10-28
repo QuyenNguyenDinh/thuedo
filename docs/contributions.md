@@ -45,3 +45,4 @@
 - **Buổi 2**: [CẦN BỔ SUNG: Ngày họp, Thống nhất mô hình dữ liệu ERD và giao thức API REST].
 - **Buổi 3**: [CẦN BỔ SUNG: Ngày họp, Ghép nối API Backend - Frontend, kiểm thử luồng đặt thuê].
 - **Buổi 4**: [CẦN BỔ SUNG: Ngày họp, Rà soát tài liệu báo cáo, quay video demo và kiểm tra checklist nộp bài].
+

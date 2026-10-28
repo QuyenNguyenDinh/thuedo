@@ -42,6 +42,19 @@ export async function runSeed(dataSource: DataSource) {
     console.log('✓ Đã tạo tài khoản Admin: admin@cosrent.com / Admin123@');
   }
 
+  let adminVn = await userRepo.findOne({ where: { email: 'admin@cosrent.vn' } });
+  if (!adminVn) {
+    adminVn = userRepo.create({
+      email: 'admin@cosrent.vn',
+      passwordHash,
+      fullName: 'Quản Trị Viên CosRent (VN)',
+      phone: '0988888888',
+      address: 'Cửa hàng CosRent, 123 Đường Láng, Đống Đa, Hà Nội',
+      role: Role.ADMIN,
+    });
+    await userRepo.save(adminVn);
+  }
+
   let customer1 = await userRepo.findOne({ where: { email: 'customer@cosrent.com' } });
   if (!customer1) {
     customer1 = userRepo.create({
@@ -54,6 +67,19 @@ export async function runSeed(dataSource: DataSource) {
     });
     customer1 = await userRepo.save(customer1);
     console.log('✓ Đã tạo tài khoản Customer: customer@cosrent.com / Customer123@');
+  }
+
+  let customer1Vn = await userRepo.findOne({ where: { email: 'customer@cosrent.vn' } });
+  if (!customer1Vn) {
+    customer1Vn = userRepo.create({
+      email: 'customer@cosrent.vn',
+      passwordHash: custPasswordHash,
+      fullName: 'Nguyễn Văn An',
+      phone: '0912345678',
+      address: 'Số 10 Tạ Quang Bửu, Hai Bà Trưng, Hà Nội',
+      role: Role.CUSTOMER,
+    });
+    await userRepo.save(customer1Vn);
   }
 
   let customer2 = await userRepo.findOne({ where: { email: 'customer2@cosrent.com' } });
@@ -713,3 +739,4 @@ if (require.main === module) {
       process.exit(1);
     });
 }
+

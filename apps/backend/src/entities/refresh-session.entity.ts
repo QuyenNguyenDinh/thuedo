@@ -38,3 +38,4 @@ export class RefreshSession {
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 }
+

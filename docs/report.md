@@ -167,3 +167,4 @@ Gồm 8 thực thể chính:
   - Thiết kế giao diện thân thiện, có độ tương phản cao, hỗ trợ trình đọc màn hình cho người khiếm thị (`alt` text, thẻ label chuẩn).
   - Không áp dụng các kỹ thuật thiết kế lừa dối (Dark Patterns) như tự động tích chọn phụ phí hay cài đặt bẫy giá ẩn.
   - Không tạo popup gây phiền toái hoặc nút bấm giả đánh lừa trải nghiệm của người dùng.
+

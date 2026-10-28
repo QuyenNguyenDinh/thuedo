@@ -394,3 +394,4 @@ Hệ thống có hai vai trò chính:
 | **US18** | Nhận trả đồ & hoàn cọc | Admin | `POST /api/v1/admin/rentals/:id/return` | `/admin/rentals/:id` | `admin-rentals.service.spec.ts` |
 | **US19** | Thống kê Dashboard | Admin | `GET /api/v1/admin/dashboard` | `/admin/dashboard` | `admin-dashboard.service.spec.ts` |
 | **US20** | Xem lịch sử trạng thái | Admin/Cust | Tích hợp trong `GET /api/v1/rentals/:id` | Chi tiết đơn hàng | `rental-history.service.spec.ts` |
+

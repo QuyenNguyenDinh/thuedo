@@ -126,3 +126,4 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     </Form>
   );
 };
+

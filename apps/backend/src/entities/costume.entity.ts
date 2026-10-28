@@ -64,3 +64,4 @@ export class Costume {
   @OneToMany(() => CostumeVariant, (variant) => variant.costume, { cascade: true })
   variants: CostumeVariant[];
 }
+

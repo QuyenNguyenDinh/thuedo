@@ -11,3 +11,4 @@ import { PricingController } from './pricing.controller';
   exports: [PricingService],
 })
 export class PricingModule {}
+

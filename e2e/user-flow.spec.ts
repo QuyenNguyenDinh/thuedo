@@ -51,3 +51,4 @@ test.describe('CosRent End-to-End User Journeys', () => {
     // If authenticated as admin, KPI cards will be displayed
   });
 });
+

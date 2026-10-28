@@ -53,3 +53,4 @@ export class User {
   @OneToMany(() => RentalStatusHistory, (history) => history.changedBy)
   statusHistories: RentalStatusHistory[];
 }
+

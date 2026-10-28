@@ -84,3 +84,4 @@ export class RentalOrder {
   @OneToMany(() => RentalStatusHistory, (history) => history.rentalOrder, { cascade: true })
   statusHistories: RentalStatusHistory[];
 }
+

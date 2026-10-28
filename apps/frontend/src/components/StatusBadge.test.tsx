@@ -34,3 +34,4 @@ describe('StatusBadge Component', () => {
     expect(screen.getByText(/Cửa hàng từ chối/i)).toBeInTheDocument();
   });
 });
+

@@ -3,7 +3,7 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
-import cookieParser from 'cookie-parser';
+import * as cookieParser from 'cookie-parser';
 
 import { AppModule } from './app.module';
 import { GlobalHttpExceptionFilter } from './common/filters/http-exception.filter';
@@ -32,7 +32,8 @@ async function bootstrap() {
   );
 
   // 2. Cookie Parser for HttpOnly Refresh Token
-  app.use(cookieParser());
+  const cookieMiddleware = (cookieParser as any).default || cookieParser;
+  app.use(cookieMiddleware());
 
   // 3. CORS Configuration from Config
   const corsOrigins = configService.get<string>(
@@ -124,3 +125,4 @@ async function bootstrap() {
   logger.log(`====================================================`);
 }
 bootstrap();
+

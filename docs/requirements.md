@@ -139,3 +139,4 @@ CosRent là nền tảng thương mại dịch vụ trực tuyến phục vụ m
 - Quản lý cấu trúc cơ sở dữ liệu hoàn toàn bằng Migration TypeORM; cấm bật cờ `synchronize: true` trong môi trường triển khai thực tế.
 - Khả năng kiểm thử tự động cao: Phủ kín Unit Test nghiệp vụ cốt lõi, Integration Test cơ sở dữ liệu và End-to-End Test luồng người dùng.
 - Cấu hình môi trường minh bạch thông qua `.env.example`, tài liệu hóa API đầy đủ bằng Swagger/OpenAPI.
+

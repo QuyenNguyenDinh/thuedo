@@ -13,3 +13,4 @@ import { AdminCategoriesController } from './admin-categories.controller';
   exports: [CategoriesService],
 })
 export class CategoriesModule {}
+

@@ -16,3 +16,4 @@ export class PricingController {
     return this.pricingService.calculateQuote(dto.startDate, dto.endDate, dto.items);
   }
 }
+

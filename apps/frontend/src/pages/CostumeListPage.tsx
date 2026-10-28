@@ -220,3 +220,4 @@ export const CostumeListPage: React.FC = () => {
     </div>
   );
 };
+

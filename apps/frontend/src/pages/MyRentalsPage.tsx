@@ -233,3 +233,4 @@ export const MyRentalsPage: React.FC = () => {
     </div>
   );
 };
+

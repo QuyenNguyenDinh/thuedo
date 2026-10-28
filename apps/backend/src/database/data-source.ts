@@ -18,3 +18,4 @@ export const dataSourceOptions: DataSourceOptions = {
 
 const AppDataSource = new DataSource(dataSourceOptions);
 export default AppDataSource;
+

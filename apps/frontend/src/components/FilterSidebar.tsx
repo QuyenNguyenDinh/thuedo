@@ -152,3 +152,4 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
     </Card>
   );
 };
+

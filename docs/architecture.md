@@ -377,3 +377,4 @@ sequenceDiagram
         RentalsCtrl-->>Customer: 201 Created (Kèm OrderCode & Thông tin chi tiết)
     end
 ```
+

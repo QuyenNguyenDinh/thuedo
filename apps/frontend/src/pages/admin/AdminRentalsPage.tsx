@@ -487,3 +487,4 @@ export const AdminRentalsPage: React.FC = () => {
     </div>
   );
 };
+

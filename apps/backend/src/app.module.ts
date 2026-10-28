@@ -46,6 +46,35 @@ import { AdminModule } from './modules/admin/admin.module';
         autoLoadEntities: true,
         synchronize: false, // Strict migration requirement
       }),
+      dataSourceFactory: async (options) => {
+        const anyOptions = options as any;
+        const dbHost = process.env.DB_HOST || anyOptions?.host;
+        if (dbHost === 'memory') {
+          const { createMemoryDataSource } = await import('./database/memory-data-source');
+          return createMemoryDataSource();
+        }
+        const { DataSource } = await import('typeorm');
+        const ds = new DataSource(options!);
+        try {
+          return await ds.initialize();
+        } catch (err: any) {
+          if (
+            err?.code === 'ECONNREFUSED' ||
+            err?.name === 'AggregateError' ||
+            (err?.message && err.message.includes('ECONNREFUSED'))
+          ) {
+            console.warn(
+              `⚠️ Không kết nối được PostgreSQL tại ${anyOptions?.host}:${anyOptions?.port}.`,
+            );
+            console.warn(
+              '⚡ Tự động kích hoạt In-Memory PostgreSQL (pg-mem) kèm nạp toàn bộ Seed Data để khởi chạy ứng dụng!',
+            );
+            const { createMemoryDataSource } = await import('./database/memory-data-source');
+            return createMemoryDataSource();
+          }
+          throw err;
+        }
+      },
     }),
     AuthModule,
     UsersModule,
@@ -64,3 +93,4 @@ import { AdminModule } from './modules/admin/admin.module';
   ],
 })
 export class AppModule {}
+

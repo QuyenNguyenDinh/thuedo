@@ -55,3 +55,4 @@ export class RentalOrderItem {
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 }
+

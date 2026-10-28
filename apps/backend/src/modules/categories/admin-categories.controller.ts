@@ -49,3 +49,4 @@ export class AdminCategoriesController {
     return this.categoriesService.delete(id);
   }
 }
+

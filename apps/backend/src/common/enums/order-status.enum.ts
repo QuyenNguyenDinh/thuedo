@@ -25,3 +25,4 @@ export const VALID_STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   [OrderStatus.CANCELLED]: [],
   [OrderStatus.REJECTED]: [],
 };
+

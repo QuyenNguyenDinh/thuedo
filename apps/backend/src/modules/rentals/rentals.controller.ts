@@ -71,3 +71,4 @@ export class RentalsController {
     return this.rentalsService.cancelRental(user.userId, user.role, id, dto?.reason);
   }
 }
+

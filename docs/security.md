@@ -89,3 +89,4 @@
 - Bộ lọc lỗi toàn cục (`GlobalHttpExceptionFilter`) chuẩn hóa thông điệp lỗi: Trong môi trường sản xuất (`NODE_ENV=production`), tuyệt đối không gửi chi tiết lỗi cơ sở dữ liệu hoặc stack trace về client.
 - Lỗi đăng nhập được thông báo đồng nhất: *"Email hoặc mật khẩu không chính xác"* để không tiết lộ cho kẻ tấn công biết email đó đã đăng ký tài khoản hay chưa.
 - Tuyệt đối không ghi mật khẩu gốc, access token, refresh token hay số CCCD vào file log hệ thống.
+

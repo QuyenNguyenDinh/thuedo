@@ -455,3 +455,4 @@ export class RentalsService {
     return { message: 'Ghi nhận trả đồ và hoàn cọc thành công.', order: saved };
   }
 }
+

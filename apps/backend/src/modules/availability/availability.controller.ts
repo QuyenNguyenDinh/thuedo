@@ -29,3 +29,4 @@ export class AvailabilityController {
     return this.availabilityService.checkVariantAvailability(variantId, startDate, endDate);
   }
 }
+

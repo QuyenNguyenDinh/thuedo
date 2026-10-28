@@ -211,3 +211,4 @@ export class InitialMigration1700000000000 implements MigrationInterface {
     await queryRunner.query(`DROP TABLE IF EXISTS "users";`);
   }
 }
+

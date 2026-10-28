@@ -375,3 +375,4 @@ FROM (
 ) daily_reserved;
 ```
 Nếu `new_total_quantity - out_of_service < peak_reserved`, hệ thống lập tức từ chối và cảnh báo Admin.
+

@@ -42,3 +42,4 @@ export class RegisterDto {
   @IsOptional()
   address?: string;
 }
+

@@ -147,3 +147,4 @@ export interface RentalOrder {
   items: RentalOrderItem[];
   statusHistories?: RentalStatusHistory[];
 }
+

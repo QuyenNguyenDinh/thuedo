@@ -37,3 +37,4 @@ export class Category {
   @OneToMany(() => Costume, (costume) => costume.category)
   costumes: Costume[];
 }
+

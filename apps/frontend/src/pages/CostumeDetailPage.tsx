@@ -430,3 +430,4 @@ export const CostumeDetailPage: React.FC = () => {
     </div>
   );
 };
+

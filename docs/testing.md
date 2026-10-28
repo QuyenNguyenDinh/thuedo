@@ -113,3 +113,4 @@ npx playwright test
 | **US18** | `POST /api/v1/admin/rentals/:id/return` | `/admin/rentals/:id`| `TC-STATE-03`, `TC-RETURN-01` |
 | **US19** | `GET /api/v1/admin/dashboard` | `/admin/dashboard` | `TC-DASHBOARD-KPI` |
 | **US20** | `GET /api/v1/rentals/:id` (history) | Chi tiết đơn | `TC-AUDIT-TRAIL` |
+

@@ -72,3 +72,4 @@ export class QueryCostumesDto {
   @IsOptional()
   sortBy?: CostumeSortBy = CostumeSortBy.CREATED_AT_DESC;
 }
+

@@ -35,3 +35,4 @@ export class CostumeImage {
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 }
+

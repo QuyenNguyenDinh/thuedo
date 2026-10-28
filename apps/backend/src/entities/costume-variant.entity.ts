@@ -46,3 +46,4 @@ export class CostumeVariant {
   @OneToMany(() => RentalOrderItem, (item) => item.costumeVariant)
   orderItems: RentalOrderItem[];
 }
+

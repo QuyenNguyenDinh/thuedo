@@ -40,3 +40,4 @@ export class RentalQuoteRequestDto {
   @Type(() => QuoteItemDto)
   items: QuoteItemDto[];
 }
+

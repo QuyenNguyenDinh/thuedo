@@ -25,3 +25,4 @@ import { AvailabilityModule } from '../availability/availability.module';
   exports: [RentalsService],
 })
 export class RentalsModule {}
+

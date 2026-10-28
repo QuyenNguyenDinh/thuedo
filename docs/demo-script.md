@@ -75,3 +75,4 @@
 
 ### Phân đoạn 6: Kết thúc (07:15 - 07:30)
 - **Lời thoại**: "Dự án CosRent đã hoàn thành đầy đủ 20 User Stories, vượt qua toàn bộ các ca kiểm thử tự động và sẵn sàng bàn giao. Nhóm em xin chân thành cảm ơn Thầy/Cô!"
+

@@ -304,3 +304,4 @@ Hệ thống kết hợp cơ chế xác thực kép an toàn:
 - `POST /api/v1/admin/rentals/:id/reject`: Từ chối đơn PENDING $\rightarrow$ REJECTED (kèm lý do).
 - `POST /api/v1/admin/rentals/:id/deliver`: Giao đồ tại quầy CONFIRMED $\rightarrow$ RENTING.
 - `POST /api/v1/admin/rentals/:id/return`: Nhận trả đồ & hoàn cọc RENTING $\rightarrow$ RETURNED.
+

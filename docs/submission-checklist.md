@@ -49,3 +49,4 @@
 - [ ] Đã chạy và vượt qua toàn bộ Unit Test, Integration Test và E2E Test.
 - [ ] Có dữ liệu Seed mẫu tối thiểu 20 trang phục và đơn hàng mẫu cho mọi trạng thái.
 - [ ] Swagger hoạt động tốt tại `http://localhost:3000/api/docs`.
+

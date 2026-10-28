@@ -1,0 +1,145 @@
+:root {
+  --primary-navy: #003580;
+  --secondary-navy: #00224f;
+  --accent-gold: #febb02;
+  --accent-gold-hover: #e5a802;
+  --body-bg: #f5f7fa;
+  --text-dark: #1a1a1a;
+  --text-muted: #595959;
+  --border-color: #e7e7e7;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--body-bg);
+  color: var(--text-dark);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Header Booking.com style */
+.header-navy {
+  background-color: var(--primary-navy);
+  color: white;
+}
+
+.brand-logo {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: white !important;
+  text-decoration: none;
+}
+
+.brand-logo span {
+  color: var(--accent-gold);
+}
+
+/* Search Box Booking.com style */
+.booking-search-box {
+  background-color: white;
+  border: 4px solid var(--accent-gold);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  padding: 8px;
+}
+
+.booking-search-input {
+  border: none;
+  border-right: 1px solid #ddd;
+  border-radius: 0;
+  padding: 12px 14px;
+  font-size: 0.95rem;
+}
+
+.booking-search-input:focus {
+  outline: none;
+  box-shadow: none;
+  background-color: #fffef5;
+}
+
+.btn-search-gold {
+  background-color: var(--accent-gold);
+  color: #000;
+  font-weight: 700;
+  border: none;
+  padding: 12px 24px;
+  font-size: 1rem;
+  border-radius: 4px;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.btn-search-gold:hover {
+  background-color: var(--accent-gold-hover);
+  color: #000;
+}
+
+/* Costume Cards */
+.costume-card {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background-color: white;
+  transition: transform 0.2s, box-shadow 0.2s;
+  overflow: hidden;
+}
+
+.costume-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.costume-card-img {
+  height: 240px;
+  object-fit: cover;
+  width: 100%;
+  background-color: #eee;
+}
+
+.badge-gold {
+  background-color: #fff8e1;
+  color: #b78103;
+  border: 1px solid #ffe082;
+  font-weight: 600;
+}
+
+/* Sidebar filter */
+.filter-card {
+  background-color: white;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+/* Stepper */
+.stepper-step {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.stepper-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+  font-size: 0.8rem;
+}
+
+.stepper-active {
+  background-color: var(--primary-navy);
+  color: white;
+}
+
+.stepper-completed {
+  background-color: #198754;
+  color: white;
+}
+
+.stepper-inactive {
+  background-color: #e9ecef;
+  color: #6c757d;
+}

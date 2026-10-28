@@ -1,0 +1,32 @@
+{
+  "name": "cosrent-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CosRent - Website cho thuê trang phục và phụ kiện cosplay",
+  "workspaces": [
+    "apps/backend",
+    "apps/frontend"
+  ],
+  "scripts": {
+    "dev:backend": "npm run start:dev --workspace=apps/backend",
+    "dev:frontend": "npm run dev --workspace=apps/frontend",
+    "build:backend": "npm run build --workspace=apps/backend",
+    "build:frontend": "npm run build --workspace=apps/frontend",
+    "build": "npm run build:backend && npm run build:frontend",
+    "test:backend": "npm run test --workspace=apps/backend",
+    "test:frontend": "npm run test --workspace=apps/frontend",
+    "test": "npm run test:backend && npm run test:frontend",
+    "test:e2e": "npx playwright test"
+  },
+  "keywords": [
+    "cosplay",
+    "rental",
+    "nestjs",
+    "react",
+    "typescript",
+    "typeorm",
+    "postgresql"
+  ],
+  "author": "[CẦN BỔ SUNG: Họ tên sinh viên]",
+  "license": "MIT"
+}

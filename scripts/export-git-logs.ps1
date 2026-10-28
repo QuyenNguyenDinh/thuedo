@@ -10,3 +10,4 @@ Write-Host "==========================================" -ForegroundColor Green
 git log -20 --pretty=format:"* %h - %an (%ad): %s" --date=short
 
 Write-Host "`n`nLưu ý: Bạn có thể sao chép kết quả trên vào docs/contributions.md để hoàn thiện minh chứng Câu 10." -ForegroundColor Yellow
+

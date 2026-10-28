@@ -110,6 +110,80 @@ body {
   padding: 16px;
 }
 
+/* Category Booking.com Showcase Cards */
+.category-card {
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background-color: white;
+  transition: all 0.25s ease-in-out;
+  overflow: hidden;
+  text-decoration: none !important;
+  color: inherit !important;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.category-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px rgba(0, 53, 128, 0.14);
+  border-color: #90b8f0;
+}
+
+.category-card-img-wrapper {
+  position: relative;
+  height: 135px;
+  overflow: hidden;
+  background-color: #e9ecef;
+}
+
+.category-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.category-card:hover .category-card-img {
+  transform: scale(1.08);
+}
+
+.category-card-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 34, 79, 0.85);
+  color: white;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 12px;
+  backdrop-filter: blur(4px);
+}
+
+.category-card-icon-pill {
+  position: absolute;
+  bottom: -14px;
+  left: 14px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  z-index: 2;
+}
+
+.category-card-body {
+  padding: 22px 14px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
 /* Stepper */
 .stepper-step {
   display: flex;

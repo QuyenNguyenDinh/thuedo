@@ -6,6 +6,53 @@ import { Costume, Category } from '../types';
 import { SearchBar } from '../components/SearchBar';
 import { CostumeCard } from '../components/CostumeCard';
 
+const CATEGORY_META: Record<
+  string,
+  {
+    image: string;
+    icon: string;
+    iconColor: string;
+    tag: string;
+    subtitle: string;
+  }
+> = {
+  'anime-manga': {
+    image: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=600&auto=format&fit=crop&q=80',
+    icon: 'bi-stars',
+    iconColor: '#dc3545',
+    tag: 'Thịnh hành',
+    subtitle: 'Demon Slayer, SPY x FAMILY, Frieren',
+  },
+  'game-cosplay': {
+    image: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=600&auto=format&fit=crop&q=80',
+    icon: 'bi-controller',
+    iconColor: '#0d6efd',
+    tag: 'Hot nhất',
+    subtitle: 'Genshin Impact, Honkai Star Rail, LOL',
+  },
+  'co-phong-hanfu': {
+    image: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
+    icon: 'bi-flower1',
+    iconColor: '#198754',
+    tag: 'Thanh lịch',
+    subtitle: 'Ma Đạo Tổ Sư, Hán phục Minh Chế, Tiên hiệp',
+  },
+  'sieu-anh-hung': {
+    image: 'https://images.unsplash.com/photo-1635863138275-d9b33299680b?w=600&auto=format&fit=crop&q=80',
+    icon: 'bi-shield-shaded',
+    iconColor: '#fd7e14',
+    tag: 'Năng động',
+    subtitle: 'Spider-Man, Deadpool, Batman, Avengers',
+  },
+  'vocaloid-idol': {
+    image: 'https://images.unsplash.com/photo-1514533450685-4493e01d1fdc?w=600&auto=format&fit=crop&q=80',
+    icon: 'bi-music-note-beamed',
+    iconColor: '#0dcaf0',
+    tag: 'Sôi động',
+    subtitle: 'Hatsune Miku, Oshi no Ko, Love Live',
+  },
+};
+
 export const HomePage: React.FC = () => {
   const [costumes, setCostumes] = useState<Costume[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -33,7 +80,12 @@ export const HomePage: React.FC = () => {
   return (
     <div>
       {/* Hero Section Booking.com Style */}
-      <section className="header-navy text-white pt-5 pb-5 position-relative">
+      <section
+        className="header-navy text-white pt-5 pb-5 position-relative shadow-sm"
+        style={{
+          background: 'linear-gradient(135deg, rgba(0, 34, 79, 0.94) 0%, rgba(0, 53, 128, 0.90) 100%), url("https://images.unsplash.com/photo-1578632767115-351597cf2477?w=1600&auto=format&fit=crop&q=80") center/cover no-repeat',
+        }}
+      >
         <Container>
           <Row className="justify-content-center text-center mb-4">
             <Col lg={9}>
@@ -69,32 +121,54 @@ export const HomePage: React.FC = () => {
             </Link>
           </div>
 
-          <Row className="g-3">
-            {categories.map((cat) => (
-              <Col md={4} sm={6} key={cat.id}>
-                <Card
-                  as={Link}
-                  to={`/costumes?categoryId=${cat.id}`}
-                  className="h-100 p-3 border text-decoration-none text-dark shadow-sm hover-shadow transition"
-                  style={{ borderRadius: '8px' }}
-                >
-                  <div className="d-flex align-items-center">
-                    <div
-                      className="rounded-circle bg-light d-flex align-items-center justify-content-center me-3"
-                      style={{ width: '48px', height: '48px' }}
-                    >
-                      <i className="bi bi-tag-fill text-warning fs-4"></i>
+          <Row className="row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-3">
+            {categories.map((cat) => {
+              const meta = CATEGORY_META[cat.slug] || {
+                image: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=600',
+                icon: 'bi-tag-fill',
+                iconColor: '#003580',
+                tag: 'Cosplay',
+                subtitle: cat.description || 'Xem kho trang phục',
+              };
+
+              return (
+                <Col key={cat.id}>
+                  <Link
+                    to={`/costumes?categoryId=${cat.id}`}
+                    className="category-card shadow-sm"
+                  >
+                    <div className="category-card-img-wrapper">
+                      <img
+                        src={meta.image}
+                        alt={cat.name}
+                        className="category-card-img"
+                        loading="lazy"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src =
+                            'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=600';
+                        }}
+                      />
+                      <span className="category-card-badge">{meta.tag}</span>
+                      <div className="category-card-icon-pill" style={{ color: meta.iconColor }}>
+                        <i className={`bi ${meta.icon}`}></i>
+                      </div>
                     </div>
-                    <div>
-                      <h6 className="fw-bold mb-1 text-primary">{cat.name}</h6>
-                      <small className="text-muted text-truncate d-block" style={{ maxWidth: '220px' }}>
-                        {cat.description || 'Xem danh sách trang phục'}
+                    <div className="category-card-body">
+                      <h6 className="fw-bold mb-1 text-dark text-truncate" title={cat.name}>
+                        {cat.name}
+                      </h6>
+                      <small className="text-muted d-block text-truncate mb-2" style={{ fontSize: '0.78rem' }} title={meta.subtitle}>
+                        {meta.subtitle}
                       </small>
+                      <div className="mt-auto d-flex align-items-center text-primary fw-semibold" style={{ fontSize: '0.8rem' }}>
+                        <span>Xem trang phục</span>
+                        <i className="bi bi-chevron-right ms-1" style={{ fontSize: '0.7rem' }}></i>
+                      </div>
                     </div>
-                  </div>
-                </Card>
-              </Col>
-            ))}
+                  </Link>
+                </Col>
+              );
+            })}
           </Row>
         </Container>
       </section>

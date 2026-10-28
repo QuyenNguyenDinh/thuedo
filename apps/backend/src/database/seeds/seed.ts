@@ -165,7 +165,8 @@ export async function runSeed(dataSource: DataSource) {
       price: 180000,
       deposit: 500000,
       images: [
-        'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=800',
+        'https://images.unsplash.com/photo-1569074187119-c87815b476da?w=800',
+        'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800',
       ],
       variants: [
         { size: 'S', sku: 'CR-FRIEREN-S', qty: 2 },
@@ -182,7 +183,8 @@ export async function runSeed(dataSource: DataSource) {
       price: 190000,
       deposit: 550000,
       images: [
-        'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800',
+        'https://images.unsplash.com/photo-1580477667995-2b94f01c9516?w=800',
+        'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=800',
       ],
       variants: [
         { size: 'S', sku: 'CR-HUTAO-S', qty: 2 },
@@ -218,7 +220,8 @@ export async function runSeed(dataSource: DataSource) {
       price: 150000,
       deposit: 500000,
       images: [
-        'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=800',
+        'https://images.unsplash.com/photo-1514533450685-4493e01d1fdc?w=800',
+        'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800',
       ],
       variants: [
         { size: 'S', sku: 'CR-MIKU-S', qty: 3 },
@@ -288,7 +291,8 @@ export async function runSeed(dataSource: DataSource) {
       price: 210000,
       deposit: 650000,
       images: [
-        'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800',
+        'https://images.unsplash.com/photo-1580477667995-2b94f01c9516?w=800',
+        'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=800',
       ],
       variants: [
         { size: 'M', sku: 'CR-KAFKA-M', qty: 3 },
@@ -338,7 +342,8 @@ export async function runSeed(dataSource: DataSource) {
       price: 220000,
       deposit: 700000,
       images: [
-        'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=800',
+        'https://images.unsplash.com/photo-1514533450685-4493e01d1fdc?w=800',
+        'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800',
       ],
       variants: [
         { size: 'M', sku: 'CR-LAN-M', qty: 2 },
@@ -372,6 +377,7 @@ export async function runSeed(dataSource: DataSource) {
       price: 160000,
       deposit: 500000,
       images: [
+        'https://images.unsplash.com/photo-1635863138275-d9b33299680b?w=800',
         'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=800',
       ],
       variants: [
@@ -407,7 +413,8 @@ export async function runSeed(dataSource: DataSource) {
       price: 240000,
       deposit: 750000,
       images: [
-        'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800',
+        'https://images.unsplash.com/photo-1580477667995-2b94f01c9516?w=800',
+        'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=800',
       ],
       variants: [
         { size: 'S', sku: 'CR-SABER-S', qty: 2 },
@@ -425,7 +432,8 @@ export async function runSeed(dataSource: DataSource) {
       price: 150000,
       deposit: 450000,
       images: [
-        'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=800',
+        'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=800',
+        'https://images.unsplash.com/photo-1535223289827-42f1e9919769?w=800',
       ],
       variants: [
         { size: 'M', sku: 'CR-GOJO-M', qty: 3 },
@@ -460,7 +468,8 @@ export async function runSeed(dataSource: DataSource) {
       price: 260000,
       deposit: 850000,
       images: [
-        'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=800',
+        'https://images.unsplash.com/photo-1514533450685-4493e01d1fdc?w=800',
+        'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800',
       ],
       variants: [
         { size: 'S', sku: 'CR-AHRI-S', qty: 2 },
@@ -477,6 +486,7 @@ export async function runSeed(dataSource: DataSource) {
       price: 190000,
       deposit: 600000,
       images: [
+        'https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?w=800',
         'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800',
       ],
       variants: [
@@ -491,6 +501,21 @@ export async function runSeed(dataSource: DataSource) {
   for (const def of costumeDefs) {
     let costume = await costumeRepo.findOne({ where: { slug: def.slug } });
     const cat = catMap.get(def.cat)!;
+
+    if (costume) {
+      // Đảm bảo cập nhật toàn bộ ảnh sang bộ ảnh chuẩn mới nhất
+      await imageRepo.delete({ costumeId: costume.id });
+      for (let i = 0; i < def.images.length; i++) {
+        const img = imageRepo.create({
+          costumeId: costume.id,
+          imageUrl: def.images[i],
+          altText: `${def.name} - Ảnh ${i + 1}`,
+          isPrimary: i === 0,
+          displayOrder: i,
+        });
+        await imageRepo.save(img);
+      }
+    }
 
     if (!costume) {
       costume = costumeRepo.create({

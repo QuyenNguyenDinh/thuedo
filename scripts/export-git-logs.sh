@@ -12,3 +12,4 @@ git log -20 --pretty=format:"* %h - %an (%ad): %s" --date=short
 
 echo ""
 echo "Lưu ý: Bạn có thể sao chép kết quả trên vào docs/contributions.md để hoàn thiện minh chứng Câu 10."
+

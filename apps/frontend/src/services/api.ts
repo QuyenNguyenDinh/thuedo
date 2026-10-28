@@ -9,8 +9,13 @@ export const setAccessToken = (token: string | null) => {
 
 export const getAccessToken = () => inMemoryAccessToken;
 
+const apiBase =
+  typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_BASE_URL
+    ? `${(import.meta as any).env.VITE_API_BASE_URL}/api/v1`
+    : '/api/v1';
+
 const api = axios.create({
-  baseURL: (import.meta.env.VITE_API_BASE_URL ? `${import.meta.env.VITE_API_BASE_URL}/api/v1` : '/api/v1'),
+  baseURL: apiBase,
   withCredentials: true, // Necessary for sending/receiving HttpOnly refresh token cookie
   headers: {
     'Content-Type': 'application/json',

@@ -26,12 +26,17 @@ import { AdminModule } from './modules/admin/admin.module';
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => [
-        {
-          ttl: config.get<number>('THROTTLE_TTL') || 60000,
-          limit: config.get<number>('THROTTLE_LIMIT') || 100,
-        },
-      ],
+      useFactory: (config: ConfigService) => {
+        const rawTtl = Number(config.get('THROTTLE_TTL')) || 60000;
+        // Throttler v5+ TTL tính bằng mili-giây: nếu cấu hình <= 300 (giây), quy đổi sang ms
+        const ttlMs = rawTtl <= 300 ? rawTtl * 1000 : rawTtl;
+        return [
+          {
+            ttl: ttlMs,
+            limit: Number(config.get('THROTTLE_LIMIT')) || 100,
+          },
+        ];
+      },
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],

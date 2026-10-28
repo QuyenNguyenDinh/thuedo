@@ -86,9 +86,9 @@ Backend áp dụng nguyên lý tách biệt trách nhiệm (Separation of Concer
 ## 4. Hướng dẫn Cài đặt & Khởi chạy
 
 ### Yêu cầu hệ thống (Prerequisites)
-- **Node.js:** Phiên bản `>= 18.0.0` (Khuyến nghị `v20.x` hoặc `v22.x`, đã kiểm tra tương thích trên `v24.x`).
-- **npm:** Phiên bản `>= 9.x` (có hỗ trợ npm Workspaces).
-- **PostgreSQL 16:** Cài đặt trực tiếp trên máy hoặc chạy qua Docker.
+- **Node.js:** Phiên bản `>= 20.19.0` (Khuyến nghị LTS `v20.x` hoặc `v22.x`, đã kiểm tra tương thích trên `v24.x`).
+- **npm:** Phiên bản `>= 9.0.0` (có hỗ trợ npm Workspaces).
+- **PostgreSQL 16:** Cài đặt trực tiếp trên máy hoặc chạy qua Docker Compose.
 
 ### Bước 1: Clone mã nguồn và cài đặt dependencies
 ```bash
@@ -104,29 +104,39 @@ docker compose up -d
 ```
 Cách B: Sử dụng PostgreSQL cài sẵn trên máy
 Tạo database tên `cosrent_db` với user/password tương ứng cấu hình trong file `.env`.
+*(Lưu ý: Nếu chạy trên máy chưa cài Docker hay PostgreSQL, backend tự động kích hoạt chế độ In-Memory PostgreSQL qua `pg-mem` để bạn có thể trải nghiệm đầy đủ ngay lập tức!)*
 
 ### Bước 3: Cấu hình biến môi trường (.env)
-Sao chép file cấu hình mẫu từ `.env.example`:
+Sao chép cấu hình riêng biệt cho từng ứng dụng từ file `.env.example`:
 ```bash
-# Backend configuration
-cp .env.example apps/backend/.env
+# Cấu hình Backend (DB, JWT, Rate limit, CORS)
+cp apps/backend/.env.example apps/backend/.env
 
-# Frontend configuration (nếu cần đổi URL API)
-cp .env.example apps/frontend/.env
+# Cấu hình Frontend (Chỉ chứa VITE_API_BASE_URL, tuyệt đối không lộ secret backend)
+cp apps/frontend/.env.example apps/frontend/.env
 ```
-Nội dung mẫu mặc định:
+Nội dung backend mặc định (`apps/backend/.env`):
 ```env
+NODE_ENV=development
 PORT=3000
+FRONTEND_URL=http://localhost:5173
+
 DB_HOST=localhost
 DB_PORT=5432
-DB_USER=cosrent_user
-DB_PASSWORD=cosrent_secret
-DB_NAME=cosrent_db
-JWT_ACCESS_SECRET=cosrent_access_jwt_secret_key_2026_phenikaa
-JWT_REFRESH_SECRET=cosrent_refresh_jwt_secret_key_2026_phenikaa
-JWT_ACCESS_EXPIRATION=15m
-JWT_REFRESH_EXPIRATION=7d
-FRONTEND_URL=http://localhost:5173
+DB_USERNAME=postgres
+DB_PASSWORD=postgres_password_example
+DB_DATABASE=cosrent_db
+DB_SYNCHRONIZE=false
+
+JWT_ACCESS_SECRET=your_jwt_access_secret_min_32_characters_long_example
+JWT_ACCESS_EXPIRES_IN=15m
+JWT_REFRESH_SECRET=your_jwt_refresh_secret_min_32_characters_long_example
+JWT_REFRESH_EXPIRES_IN=7d
+COOKIE_SECRET=your_cookie_signing_secret_example
+
+THROTTLE_TTL=60000
+THROTTLE_LIMIT=100
+CORS_ORIGIN=http://localhost:5173,http://127.0.0.1:5173
 ```
 
 ### Bước 4: Chạy Migration và Seed dữ liệu khởi tạo
@@ -155,13 +165,13 @@ Truy cập tài liệu Swagger API tại: **`http://localhost:3000/api/docs`**
 
 ## 5. Tài khoản Thử nghiệm (Demo Accounts)
 
-Sau khi chạy seed dữ liệu, hệ thống đã sẵn sàng với các tài khoản sau:
+Sau khi chạy seed dữ liệu, hệ thống đã sẵn sàng với các tài khoản sau (hỗ trợ cả đuôi `@cosrent.vn` và `@cosrent.com`):
 
 | Vai trò | Email đăng nhập | Mật khẩu | Mục đích sử dụng |
 | :--- | :--- | :--- | :--- |
-| **Quản trị viên (ADMIN)** | `admin@cosrent.vn` | `Admin@123` | Quản lý trang phục, tồn kho, duyệt đơn, bàn giao, nhận trả |
-| **Khách hàng 1 (CUSTOMER)** | `customer@cosrent.vn` | `Customer@123` | Khách hàng mẫu có lịch sử đơn hàng đủ các trạng thái |
-| **Khách hàng 2 (CUSTOMER)** | `customer2@cosrent.vn` | `Customer@123` | Khách hàng mới để thử nghiệm tạo đơn và hủy đơn |
+| **Quản trị viên (ADMIN)** | `admin@cosrent.vn` / `admin@cosrent.com` | `Admin123@` | Quản lý trang phục, tồn kho, duyệt đơn, bàn giao, nhận trả |
+| **Khách hàng 1 (CUSTOMER)** | `customer@cosrent.vn` / `customer@cosrent.com` | `Customer123@` | Khách hàng mẫu có lịch sử đơn hàng đủ các trạng thái |
+| **Khách hàng 2 (CUSTOMER)** | `customer2@cosrent.vn` / `customer2@cosrent.com` | `Customer123@` | Khách hàng mới để thử nghiệm tạo đơn và hủy đơn |
 
 ---
 
@@ -173,30 +183,31 @@ Dự án trang bị hệ thống kiểm thử tự động toàn diện theo mô
 # 1. Chạy toàn bộ Unit Tests (Backend Jest + Frontend Vitest)
 npm test
 
-# 2. Chạy riêng Backend Unit Tests (Pricing, Availability, State Machine)
+# 2. Chạy riêng Backend Unit Tests trong src/ (Pricing, Availability, State Machine)
 npm run test:backend
 
 # 3. Chạy riêng Frontend Unit Tests (StatusBadge, CostumeCard, LoginPage)
 npm run test:frontend
 
-# 4. Chạy Backend Integration & Concurrency Tests (Phòng chống Race Condition, RBAC, IDOR)
+# 4. Chạy toàn bộ Test trong thư mục test/ của Backend (Câu 7b - US01 đến US20, Khóa bi quan, RBAC, IDOR)
 npm run test:e2e --workspace=apps/backend
 
 # 5. Chạy Kiểm tra Độ phủ Code (Code Coverage)
 npm run test:cov --workspace=apps/backend
 
-# 6. Chạy Kiểm thử Luồng người dùng Frontend (Playwright E2E)
+# 6. Chạy Kiểm thử Luồng người dùng Frontend (Playwright E2E - Chạy tuần tự an toàn với workers: 1)
 npx playwright test
 ```
 
 ### Bằng chứng Kết quả Kiểm thử Thực tế
-- **Backend Unit Tests:** `19/19 passed (100%)` trên Jest.
+- **Backend Unit Tests (`src/`):** `19/19 passed (100%)` trên Jest.
   - `pricing.service.spec.ts`: Đạt kiểm thử đếm ngày lịch bao gồm hai đầu, tính tiền thuê, tính cọc, kiểm tra ngày quá khứ.
   - `availability.service.spec.ts`: Đạt kiểm thử tính Min-available theo từng ngày trong khoảng, kiểm tra đơn quá hạn `RENTING` tiếp tục giữ chỗ, kiểm tra giải phóng chỗ khi `CANCELLED`/`RETURNED`.
   - `rental-state-machine.spec.ts`: Đạt kiểm thử chuyển trạng thái hợp lệ và chặn đứng chuyển trạng thái sai quy tắc.
-- **Backend Concurrency E2E Tests:** `6/6 passed (100%)` trên Supertest.
-  - Đạt bài test 2 luồng yêu cầu đồng thời tranh chấp biến thể chỉ còn 1 sản phẩm: Đúng 1 đơn thành công, 1 đơn bị từ chối với lỗi `409 Conflict`, không xảy ra Overselling.
-  - Đạt bài test kiểm soát quyền hạn RBAC và chống truy cập chéo IDOR.
+- **Backend Tests trong thư mục `test/` (Đáp ứng trực tiếp Tiêu chí Câu 7b):** `26/26 passed (100%)`.
+  - `test/user-stories.e2e-spec.ts`: Kiểm thử toàn bộ 20 User Stories của Câu 1 (US01 đến US20).
+  - `test/concurrency.e2e-spec.ts`: Đạt bài test 2 luồng yêu cầu đồng thời tranh chấp biến thể chỉ còn 1 sản phẩm: Đúng 1 đơn thành công, 1 đơn bị từ chối với lỗi `409 Conflict`, không xảy ra Overselling.
+  - `test/auth-rbac.e2e-spec.ts`: Đạt bài test kiểm soát quyền hạn RBAC và chống truy cập chéo IDOR.
 - **Frontend Unit Tests:** `10/10 passed (100%)` trên Vitest + React Testing Library.
   - Render thẻ sản phẩm, format VND chính xác, kiểm tra màu sắc/badge trạng thái chuẩn Booking.com, validate form đăng nhập.
 - **Biên dịch Production (Build Verification):**

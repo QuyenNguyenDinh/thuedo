@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { Navigate } from 'react-router-dom';
 
 export const ProfilePage: React.FC = () => {
-  const { user, updateProfile, loading: authLoading } = useAuth();
+  const { user, updateProfile, refreshUser, loading: authLoading } = useAuth();
 
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
@@ -12,6 +12,10 @@ export const ProfilePage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    refreshUser();
+  }, []);
 
   useEffect(() => {
     if (user) {

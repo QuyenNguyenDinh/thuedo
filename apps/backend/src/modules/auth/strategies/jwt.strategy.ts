@@ -19,12 +19,23 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     @InjectRepository(User)
     private userRepository: Repository<User>,
   ) {
+    const secret =
+      configService.get<string>('JWT_ACCESS_SECRET') ||
+      'cosrent_jwt_access_secret_min_32_characters_default';
+
+    if (
+      process.env.NODE_ENV === 'production' &&
+      secret === 'cosrent_jwt_access_secret_min_32_characters_default'
+    ) {
+      throw new Error(
+        'Cảnh báo bảo mật: JWT_ACCESS_SECRET phải được thiết lập khóa bí mật an toàn trong môi trường Production!',
+      );
+    }
+
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey:
-        configService.get<string>('JWT_ACCESS_SECRET') ||
-        'cosrent_jwt_access_secret_min_32_characters_default',
+      secretOrKey: secret,
     });
   }
 

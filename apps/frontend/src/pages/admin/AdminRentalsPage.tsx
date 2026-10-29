@@ -12,6 +12,7 @@ import {
   Row,
   Col,
   Nav,
+  Pagination,
 } from 'react-bootstrap';
 import { Navigate } from 'react-router-dom';
 import api from '../../services/api';
@@ -25,6 +26,9 @@ export const AdminRentalsPage: React.FC = () => {
   const [rentals, setRentals] = useState<RentalOrder[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
   const [keyword, setKeyword] = useState<string>('');
+  const [page, setPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [totalCount, setTotalCount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -54,10 +58,16 @@ export const AdminRentalsPage: React.FC = () => {
       const params = new URLSearchParams();
       if (selectedStatus !== 'ALL') params.set('status', selectedStatus);
       if (keyword.trim()) params.set('keyword', keyword.trim());
-      params.set('limit', '50');
+      params.set('page', page.toString());
+      params.set('limit', '10');
 
       const res: any = await api.get(`/admin/rentals?${params.toString()}`);
       setRentals(res.data?.items || res.items || []);
+      const meta = res.data?.meta || res.meta;
+      if (meta) {
+        setTotalPages(meta.totalPages || 1);
+        setTotalCount(meta.total || 0);
+      }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Không thể tải danh sách đơn thuê.');
     } finally {
@@ -69,7 +79,7 @@ export const AdminRentalsPage: React.FC = () => {
     if (isAdmin) {
       fetchRentals();
     }
-  }, [isAdmin, selectedStatus]);
+  }, [isAdmin, selectedStatus, page]);
 
   if (authLoading) {
     return (
@@ -187,7 +197,10 @@ export const AdminRentalsPage: React.FC = () => {
           variant="pills"
           className="mb-3 bg-white p-2 rounded border shadow-sm"
           activeKey={selectedStatus}
-          onSelect={(k) => setSelectedStatus(k || 'ALL')}
+          onSelect={(k) => {
+            setSelectedStatus(k || 'ALL');
+            setPage(1);
+          }}
         >
           <Nav.Item>
             <Nav.Link eventKey="ALL">Tất cả</Nav.Link>
@@ -214,6 +227,7 @@ export const AdminRentalsPage: React.FC = () => {
           <Form
             onSubmit={(e) => {
               e.preventDefault();
+              setPage(1);
               fetchRentals();
             }}
           >
@@ -344,6 +358,30 @@ export const AdminRentalsPage: React.FC = () => {
                 )}
               </tbody>
             </Table>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="d-flex flex-wrap justify-content-between align-items-center p-3 border-top bg-light">
+                <span className="small text-muted">
+                  Trang <strong>{page}</strong> / <strong>{totalPages}</strong> (Tổng cộng {totalCount} đơn thuê)
+                </span>
+                <Pagination size="sm" className="mb-0">
+                  <Pagination.Prev
+                    disabled={page <= 1}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  />
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                    <Pagination.Item key={p} active={p === page} onClick={() => setPage(p)}>
+                      {p}
+                    </Pagination.Item>
+                  ))}
+                  <Pagination.Next
+                    disabled={page >= totalPages}
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  />
+                </Pagination>
+              </div>
+            )}
           </Card>
         )}
 

@@ -53,6 +53,14 @@ export class RentalsService {
       throw new BadRequestException('Đơn thuê phải có ít nhất một trang phục.');
     }
 
+    // Check for duplicate variant IDs to prevent inventory aggregation bypass
+    const rawVariantIds = dto.items.map((i) => i.costumeVariantId);
+    if (new Set(rawVariantIds).size !== rawVariantIds.length) {
+      throw new BadRequestException(
+        'Mỗi kích cỡ / biến thể chỉ được xuất hiện một lần trong một đơn hàng. Vui lòng tăng số lượng thay vì chọn trùng lặp.',
+      );
+    }
+
     if (DateUtil.isDateInPast(dto.startDate)) {
       throw new BadRequestException('Ngày nhận đồ không được ở trong quá khứ.');
     }
@@ -75,7 +83,7 @@ export class RentalsService {
 
     try {
       // 1. Sort variant IDs ascending to prevent deadlock across concurrent checkout
-      const variantIds = Array.from(new Set(dto.items.map((i) => i.costumeVariantId))).sort();
+      const variantIds = Array.from(new Set(rawVariantIds)).sort();
 
       // 2. Lock variants with pessimistic write lock
       const lockedVariants = await queryRunner.manager
@@ -292,125 +300,149 @@ export class RentalsService {
   }
 
   async cancelRental(userId: string, role: string, id: string, reason?: string) {
-    const order = await this.orderRepository.findOne({
-      where: { id },
-      relations: ['user'],
+    return this.dataSource.transaction(async (manager) => {
+      const order = await manager
+        .createQueryBuilder(RentalOrder, 'order')
+        .setLock('pessimistic_write')
+        .where('order.id = :id', { id })
+        .getOne();
+
+      if (!order) {
+        throw new NotFoundException('Không tìm thấy đơn thuê.');
+      }
+
+      // IDOR check: Only owner or admin can cancel
+      if (role !== Role.ADMIN && order.userId !== userId) {
+        throw new ForbiddenException('Bạn không có quyền hủy đơn thuê này.');
+      }
+
+      // State machine check: Customer can ONLY cancel if status === PENDING
+      if (order.status !== OrderStatus.PENDING) {
+        throw new BadRequestException(
+          'Chỉ có thể hủy đơn thuê khi đang ở trạng thái Chờ xác nhận (PENDING).',
+        );
+      }
+
+      const user = await manager.findOne(User, { where: { id: userId } });
+      const fromStatus = order.status;
+      order.status = OrderStatus.CANCELLED;
+      const saved = await manager.save(RentalOrder, order);
+
+      // Save history atomically
+      const history = manager.create(RentalStatusHistory, {
+        rentalOrderId: saved.id,
+        fromStatus,
+        toStatus: OrderStatus.CANCELLED,
+        changedById: userId,
+        changedByName: user?.fullName || 'Khách hàng',
+        note: reason?.trim() || 'Khách hàng tự hủy đơn thuê',
+      });
+      await manager.save(RentalStatusHistory, history);
+
+      return {
+        message: 'Hủy đơn thuê thành công.',
+        order: saved,
+      };
     });
-
-    if (!order) {
-      throw new NotFoundException('Không tìm thấy đơn thuê.');
-    }
-
-    // IDOR check: Only owner or admin can cancel
-    if (role !== Role.ADMIN && order.userId !== userId) {
-      throw new ForbiddenException('Bạn không có quyền hủy đơn thuê này.');
-    }
-
-    // State machine check: Customer can ONLY cancel if status === PENDING
-    if (order.status !== OrderStatus.PENDING) {
-      throw new BadRequestException(
-        'Chỉ có thể hủy đơn thuê khi đang ở trạng thái Chờ xác nhận (PENDING).',
-      );
-    }
-
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-    const fromStatus = order.status;
-    order.status = OrderStatus.CANCELLED;
-    const saved = await this.orderRepository.save(order);
-
-    // Save history
-    const history = this.historyRepository.create({
-      rentalOrderId: saved.id,
-      fromStatus,
-      toStatus: OrderStatus.CANCELLED,
-      changedById: userId,
-      changedByName: user?.fullName || 'Khách hàng',
-      note: reason?.trim() || 'Khách hàng tự hủy đơn thuê',
-    });
-    await this.historyRepository.save(history);
-
-    return {
-      message: 'Hủy đơn thuê thành công.',
-      order: saved,
-    };
   }
 
   // --- ADMIN TRANSITIONS ---
 
   async confirmRental(adminId: string, adminName: string, id: string) {
-    const order = await this.orderRepository.findOne({ where: { id } });
-    if (!order) throw new NotFoundException('Không tìm thấy đơn thuê.');
+    return this.dataSource.transaction(async (manager) => {
+      const order = await manager
+        .createQueryBuilder(RentalOrder, 'order')
+        .setLock('pessimistic_write')
+        .where('order.id = :id', { id })
+        .getOne();
 
-    if (order.status !== OrderStatus.PENDING) {
-      throw new BadRequestException('Chỉ có thể xác nhận đơn thuê đang ở trạng thái PENDING.');
-    }
+      if (!order) throw new NotFoundException('Không tìm thấy đơn thuê.');
 
-    const fromStatus = order.status;
-    order.status = OrderStatus.CONFIRMED;
-    const saved = await this.orderRepository.save(order);
+      if (order.status !== OrderStatus.PENDING) {
+        throw new BadRequestException('Chỉ có thể xác nhận đơn thuê đang ở trạng thái PENDING.');
+      }
 
-    const history = this.historyRepository.create({
-      rentalOrderId: saved.id,
-      fromStatus,
-      toStatus: OrderStatus.CONFIRMED,
-      changedById: adminId,
-      changedByName: adminName,
-      note: 'Quản trị viên đã duyệt và xác nhận đơn thuê',
+      const fromStatus = order.status;
+      order.status = OrderStatus.CONFIRMED;
+      const saved = await manager.save(RentalOrder, order);
+
+      const history = manager.create(RentalStatusHistory, {
+        rentalOrderId: saved.id,
+        fromStatus,
+        toStatus: OrderStatus.CONFIRMED,
+        changedById: adminId,
+        changedByName: adminName,
+        note: 'Quản trị viên đã duyệt và xác nhận đơn thuê',
+      });
+      await manager.save(RentalStatusHistory, history);
+
+      return { message: 'Đã xác nhận đơn thuê thành công.', order: saved };
     });
-    await this.historyRepository.save(history);
-
-    return { message: 'Đã xác nhận đơn thuê thành công.', order: saved };
   }
 
   async rejectRental(adminId: string, adminName: string, id: string, reason?: string) {
-    const order = await this.orderRepository.findOne({ where: { id } });
-    if (!order) throw new NotFoundException('Không tìm thấy đơn thuê.');
+    return this.dataSource.transaction(async (manager) => {
+      const order = await manager
+        .createQueryBuilder(RentalOrder, 'order')
+        .setLock('pessimistic_write')
+        .where('order.id = :id', { id })
+        .getOne();
 
-    if (order.status !== OrderStatus.PENDING) {
-      throw new BadRequestException('Chỉ có thể từ chối đơn thuê đang ở trạng thái PENDING.');
-    }
+      if (!order) throw new NotFoundException('Không tìm thấy đơn thuê.');
 
-    const fromStatus = order.status;
-    order.status = OrderStatus.REJECTED;
-    const saved = await this.orderRepository.save(order);
+      if (order.status !== OrderStatus.PENDING) {
+        throw new BadRequestException('Chỉ có thể từ chối đơn thuê đang ở trạng thái PENDING.');
+      }
 
-    const history = this.historyRepository.create({
-      rentalOrderId: saved.id,
-      fromStatus,
-      toStatus: OrderStatus.REJECTED,
-      changedById: adminId,
-      changedByName: adminName,
-      note: reason?.trim() || 'Quản trị viên từ chối đơn thuê',
+      const fromStatus = order.status;
+      order.status = OrderStatus.REJECTED;
+      const saved = await manager.save(RentalOrder, order);
+
+      const history = manager.create(RentalStatusHistory, {
+        rentalOrderId: saved.id,
+        fromStatus,
+        toStatus: OrderStatus.REJECTED,
+        changedById: adminId,
+        changedByName: adminName,
+        note: reason?.trim() || 'Quản trị viên từ chối đơn thuê',
+      });
+      await manager.save(RentalStatusHistory, history);
+
+      return { message: 'Đã từ chối đơn thuê thành công.', order: saved };
     });
-    await this.historyRepository.save(history);
-
-    return { message: 'Đã từ chối đơn thuê thành công.', order: saved };
   }
 
   async deliverRental(adminId: string, adminName: string, id: string, note?: string) {
-    const order = await this.orderRepository.findOne({ where: { id } });
-    if (!order) throw new NotFoundException('Không tìm thấy đơn thuê.');
+    return this.dataSource.transaction(async (manager) => {
+      const order = await manager
+        .createQueryBuilder(RentalOrder, 'order')
+        .setLock('pessimistic_write')
+        .where('order.id = :id', { id })
+        .getOne();
 
-    if (order.status !== OrderStatus.CONFIRMED) {
-      throw new BadRequestException('Đơn thuê phải được xác nhận trước khi bàn giao trang phục.');
-    }
+      if (!order) throw new NotFoundException('Không tìm thấy đơn thuê.');
 
-    const fromStatus = order.status;
-    order.status = OrderStatus.RENTING;
-    order.deliveredAt = new Date();
-    const saved = await this.orderRepository.save(order);
+      if (order.status !== OrderStatus.CONFIRMED) {
+        throw new BadRequestException('Đơn thuê phải được xác nhận trước khi bàn giao trang phục.');
+      }
 
-    const history = this.historyRepository.create({
-      rentalOrderId: saved.id,
-      fromStatus,
-      toStatus: OrderStatus.RENTING,
-      changedById: adminId,
-      changedByName: adminName,
-      note: note?.trim() || 'Quản trị viên bàn giao trang phục tại quầy và thu tiền',
+      const fromStatus = order.status;
+      order.status = OrderStatus.RENTING;
+      order.deliveredAt = new Date();
+      const saved = await manager.save(RentalOrder, order);
+
+      const history = manager.create(RentalStatusHistory, {
+        rentalOrderId: saved.id,
+        fromStatus,
+        toStatus: OrderStatus.RENTING,
+        changedById: adminId,
+        changedByName: adminName,
+        note: note?.trim() || 'Quản trị viên bàn giao trang phục tại quầy và thu tiền',
+      });
+      await manager.save(RentalStatusHistory, history);
+
+      return { message: 'Ghi nhận bàn giao trang phục thành công.', order: saved };
     });
-    await this.historyRepository.save(history);
-
-    return { message: 'Ghi nhận bàn giao trang phục thành công.', order: saved };
   }
 
   async returnRental(
@@ -420,39 +452,55 @@ export class RentalsService {
     actualDepositReturned?: number,
     note?: string,
   ) {
-    const order = await this.orderRepository.findOne({ where: { id } });
-    if (!order) throw new NotFoundException('Không tìm thấy đơn thuê.');
+    return this.dataSource.transaction(async (manager) => {
+      const order = await manager
+        .createQueryBuilder(RentalOrder, 'order')
+        .setLock('pessimistic_write')
+        .where('order.id = :id', { id })
+        .getOne();
 
-    // Idempotency check: Cannot return twice!
-    if (order.status === OrderStatus.RETURNED) {
-      throw new BadRequestException('Đơn thuê này đã được ghi nhận trả đồ và hoàn tất trước đó.');
-    }
+      if (!order) throw new NotFoundException('Không tìm thấy đơn thuê.');
 
-    if (order.status !== OrderStatus.RENTING) {
-      throw new BadRequestException('Chỉ có thể ghi nhận trả đồ cho đơn đang ở trạng thái RENTING.');
-    }
+      // Idempotency check: Cannot return twice!
+      if (order.status === OrderStatus.RETURNED) {
+        throw new BadRequestException('Đơn thuê này đã được ghi nhận trả đồ và hoàn tất trước đó.');
+      }
 
-    const fromStatus = order.status;
-    order.status = OrderStatus.RETURNED;
-    order.returnedAt = new Date();
-    order.actualDepositReturned =
-      actualDepositReturned !== undefined ? actualDepositReturned : order.totalDeposit;
+      if (order.status !== OrderStatus.RENTING) {
+        throw new BadRequestException('Chỉ có thể ghi nhận trả đồ cho đơn đang ở trạng thái RENTING.');
+      }
 
-    const saved = await this.orderRepository.save(order);
+      const refundAmount =
+        actualDepositReturned !== undefined ? actualDepositReturned : order.totalDeposit;
 
-    const history = this.historyRepository.create({
-      rentalOrderId: saved.id,
-      fromStatus,
-      toStatus: OrderStatus.RETURNED,
-      changedById: adminId,
-      changedByName: adminName,
-      note:
-        note?.trim() ||
-        `Quản trị viên nhận trả trang phục và hoàn trả ${order.actualDepositReturned.toLocaleString('vi-VN')} đ tiền cọc`,
+      // Validate deposit refund bounds
+      if (refundAmount < 0 || refundAmount > order.totalDeposit) {
+        throw new BadRequestException(
+          `Số tiền hoàn cọc (${refundAmount.toLocaleString('vi-VN')} đ) không hợp lệ. Phải từ 0 đ đến tối đa số tiền cọc ban đầu (${order.totalDeposit.toLocaleString('vi-VN')} đ).`,
+        );
+      }
+
+      const fromStatus = order.status;
+      order.status = OrderStatus.RETURNED;
+      order.returnedAt = new Date();
+      order.actualDepositReturned = refundAmount;
+
+      const saved = await manager.save(RentalOrder, order);
+
+      const history = manager.create(RentalStatusHistory, {
+        rentalOrderId: saved.id,
+        fromStatus,
+        toStatus: OrderStatus.RETURNED,
+        changedById: adminId,
+        changedByName: adminName,
+        note:
+          note?.trim() ||
+          `Quản trị viên nhận trả trang phục và hoàn trả ${order.actualDepositReturned.toLocaleString('vi-VN')} đ tiền cọc`,
+      });
+      await manager.save(RentalStatusHistory, history);
+
+      return { message: 'Ghi nhận trả đồ và hoàn cọc thành công.', order: saved };
     });
-    await this.historyRepository.save(history);
-
-    return { message: 'Ghi nhận trả đồ và hoàn cọc thành công.', order: saved };
   }
 }
 

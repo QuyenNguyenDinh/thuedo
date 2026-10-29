@@ -63,6 +63,13 @@ import { AdminModule } from './modules/admin/admin.module';
         try {
           return await ds.initialize();
         } catch (err: any) {
+          if (process.env.NODE_ENV === 'production') {
+            console.error(
+              '❌ Môi trường PRODUCTION yêu cầu cơ sở dữ liệu PostgreSQL thực tế đang hoạt động!',
+            );
+            console.error(`Chi tiết lỗi kết nối: ${err?.message || err}`);
+            throw err;
+          }
           if (
             err?.code === 'ECONNREFUSED' ||
             err?.name === 'AggregateError' ||

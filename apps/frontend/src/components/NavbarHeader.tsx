@@ -42,6 +42,9 @@ export const NavbarHeader: React.FC = () => {
                 <Nav.Link as={Link} to="/admin/costumes" className="text-white fw-semibold">
                   <i className="bi bi-tags-fill me-1"></i> Quản lý trang phục
                 </Nav.Link>
+                <Nav.Link as={Link} to="/admin/categories" className="text-white fw-semibold">
+                  <i className="bi bi-folder2-open me-1"></i> Quản lý danh mục
+                </Nav.Link>
               </>
             )}
           </Nav>

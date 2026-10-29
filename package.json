@@ -20,7 +20,8 @@
     "test:backend": "npm run test --workspace=apps/backend",
     "test:frontend": "npm run test --workspace=apps/frontend",
     "test": "npm run test:backend && npm run test:frontend",
-    "test:e2e": "npx playwright test"
+    "test:e2e": "npx playwright test",
+    "lint": "npm run lint --workspace=apps/backend && npm run lint --workspace=apps/frontend"
   },
   "keywords": [
     "cosplay",

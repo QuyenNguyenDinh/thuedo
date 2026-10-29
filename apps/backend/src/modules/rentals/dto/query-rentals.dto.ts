@@ -22,6 +22,11 @@ export class QueryRentalsDto {
   @Min(1)
   @IsOptional()
   limit?: number = 10;
+
+  @ApiPropertyOptional({ description: 'Tìm kiếm theo mã đơn, họ tên hoặc SĐT khách hàng' })
+  @IsString()
+  @IsOptional()
+  keyword?: string;
 }
 
 export class CancelRentalDto {

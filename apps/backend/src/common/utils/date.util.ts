@@ -18,6 +18,20 @@ export class DateUtil {
     const year = parseInt(match[1], 10);
     const month = parseInt(match[2], 10);
     const day = parseInt(match[3], 10);
+
+    if (month < 1 || month > 12) {
+      throw new Error(`Tháng không hợp lệ: ${month}. Tháng phải từ 01 đến 12.`);
+    }
+
+    const testDate = new Date(Date.UTC(year, month - 1, day));
+    if (
+      testDate.getUTCFullYear() !== year ||
+      testDate.getUTCMonth() !== month - 1 ||
+      testDate.getUTCDate() !== day
+    ) {
+      throw new Error(`Ngày ${dateStr} không tồn tại trên lịch thực tế.`);
+    }
+
     return { year, month, day };
   }
 

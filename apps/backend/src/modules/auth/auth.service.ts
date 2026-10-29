@@ -71,7 +71,14 @@ export class AuthService {
   ): Promise<{
     accessToken: string;
     refreshToken: string;
-    user: { id: string; email: string; fullName: string; role: Role };
+    user: {
+      id: string;
+      email: string;
+      fullName: string;
+      role: Role;
+      phone?: string;
+      address?: string | null;
+    };
   }> {
     const email = dto.email.toLowerCase().trim();
 
@@ -102,6 +109,8 @@ export class AuthService {
         email: user.email,
         fullName: user.fullName,
         role: user.role,
+        phone: user.phone,
+        address: user.address,
       },
     };
   }
@@ -113,7 +122,14 @@ export class AuthService {
   ): Promise<{
     accessToken: string;
     refreshToken: string;
-    user: { id: string; email: string; fullName: string; role: Role };
+    user: {
+      id: string;
+      email: string;
+      fullName: string;
+      role: Role;
+      phone?: string;
+      address?: string | null;
+    };
   }> {
     if (!oldRefreshToken) {
       throw new UnauthorizedException('Không tìm thấy refresh token.');
@@ -157,6 +173,8 @@ export class AuthService {
         email: session.user.email,
         fullName: session.user.fullName,
         role: session.user.role,
+        phone: session.user.phone,
+        address: session.user.address,
       },
     };
   }
@@ -179,10 +197,21 @@ export class AuthService {
       role: user.role,
     };
 
+    const jwtSecret =
+      this.configService.get<string>('JWT_ACCESS_SECRET') ||
+      'cosrent_jwt_access_secret_min_32_characters_default';
+
+    if (
+      process.env.NODE_ENV === 'production' &&
+      jwtSecret === 'cosrent_jwt_access_secret_min_32_characters_default'
+    ) {
+      throw new Error(
+        'Cảnh báo bảo mật: JWT_ACCESS_SECRET phải được thiết lập khóa bí mật an toàn trong môi trường Production!',
+      );
+    }
+
     const accessToken = this.jwtService.sign(payload, {
-      secret:
-        this.configService.get<string>('JWT_ACCESS_SECRET') ||
-        'cosrent_jwt_access_secret_min_32_characters_default',
+      secret: jwtSecret,
       expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRES_IN') || '15m',
     });
 

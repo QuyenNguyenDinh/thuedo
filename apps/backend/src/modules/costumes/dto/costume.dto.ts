@@ -155,5 +155,12 @@ export class UpdateCostumeDto {
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;
+
+  @ApiPropertyOptional({ type: [CostumeImageDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CostumeImageDto)
+  @IsOptional()
+  images?: CostumeImageDto[];
 }
 

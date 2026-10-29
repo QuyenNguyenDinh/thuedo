@@ -31,12 +31,39 @@ describe('Rental Order State Machine & Business Rules', () => {
       findOne: jest.fn(),
     };
 
+    const mockManager = {
+      createQueryBuilder: jest.fn().mockReturnValue({
+        setLock: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockImplementation(() => mockOrderRepo.findOne()),
+      }),
+      findOne: jest.fn().mockImplementation((entityClass, options) => {
+        if (entityClass === User) return mockUserRepo.findOne(options);
+        return mockOrderRepo.findOne(options);
+      }),
+      create: jest.fn().mockImplementation((entityClass, data) => {
+        if (entityClass === RentalStatusHistory) return mockHistoryRepo.create(data);
+        return data;
+      }),
+      save: jest.fn().mockImplementation((arg1, arg2) => {
+        if (arg1 === RentalStatusHistory) {
+          return mockHistoryRepo.save(arg2);
+        }
+        const entity = arg2 !== undefined ? arg2 : arg1;
+        return mockOrderRepo.save(entity);
+      }),
+    };
+
+    const mockDataSource = {
+      transaction: jest.fn().mockImplementation(async (cb) => cb(mockManager)),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         RentalsService,
         {
           provide: DataSource,
-          useValue: {},
+          useValue: mockDataSource,
         },
         {
           provide: getRepositoryToken(RentalOrder),

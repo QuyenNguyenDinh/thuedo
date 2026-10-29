@@ -44,8 +44,21 @@ export const AdminCostumesPage: React.FC = () => {
   const [dailyPrice, setDailyPrice] = useState<number>(150000);
   const [depositAmount, setDepositAmount] = useState<number>(500000);
   const [imageUrl, setImageUrl] = useState<string>('');
+  const [customVariants, setCustomVariants] = useState<Array<{ size: string; quantity: number }>>([
+    { size: 'S', quantity: 2 },
+    { size: 'M', quantity: 3 },
+    { size: 'L', quantity: 2 },
+  ]);
   const [saving, setSaving] = useState<boolean>(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  // Add new variant modal
+  const [showAddVariantModal, setShowAddVariantModal] = useState<boolean>(false);
+  const [targetCostumeForVariant, setTargetCostumeForVariant] = useState<Costume | null>(null);
+  const [newVariantSize, setNewVariantSize] = useState<string>('XL');
+  const [newVariantQuantity, setNewVariantQuantity] = useState<number>(2);
+  const [addingVariant, setAddingVariant] = useState<boolean>(false);
+  const [addVariantError, setAddVariantError] = useState<string | null>(null);
 
   // Stock edit modal
   const [showStockModal, setShowStockModal] = useState<boolean>(false);
@@ -101,6 +114,11 @@ export const AdminCostumesPage: React.FC = () => {
     setDailyPrice(150000);
     setDepositAmount(500000);
     setImageUrl('https://images.unsplash.com/photo-1578632767115-351597cf2477?w=800');
+    setCustomVariants([
+      { size: 'S', quantity: 2 },
+      { size: 'M', quantity: 3 },
+      { size: 'L', quantity: 2 },
+    ]);
     setCategoryId(categories[0]?.id || '');
     setFormError(null);
     setShowModal(true);
@@ -137,8 +155,17 @@ export const AdminCostumesPage: React.FC = () => {
           description,
           dailyPrice: Number(dailyPrice),
           depositAmount: Number(depositAmount),
+          images: imageUrl ? [{ imageUrl, altText: name, isPrimary: true }] : undefined,
         });
       } else {
+        const variantsPayload = customVariants
+          .filter((v) => v.quantity > 0)
+          .map((v) => ({
+            size: v.size.trim().toUpperCase(),
+            sku: `CR-${Date.now().toString().slice(-4)}-${v.size.trim().toUpperCase()}`,
+            totalQuantity: Number(v.quantity),
+          }));
+
         await api.post('/admin/costumes', {
           categoryId,
           name,
@@ -149,10 +176,12 @@ export const AdminCostumesPage: React.FC = () => {
           dailyPrice: Number(dailyPrice),
           depositAmount: Number(depositAmount),
           images: imageUrl ? [{ imageUrl, altText: name, isPrimary: true }] : undefined,
-          variants: [
-            { size: 'M', sku: `CR-${Date.now().toString().slice(-4)}-M`, totalQuantity: 3 },
-            { size: 'L', sku: `CR-${Date.now().toString().slice(-4)}-L`, totalQuantity: 2 },
-          ],
+          variants:
+            variantsPayload.length > 0
+              ? variantsPayload
+              : [
+                  { size: 'FreeSize', sku: `CR-${Date.now().toString().slice(-4)}-FS`, totalQuantity: 2 },
+                ],
         });
       }
       setShowModal(false);
@@ -161,6 +190,36 @@ export const AdminCostumesPage: React.FC = () => {
       setFormError(err.response?.data?.message || 'Lỗi khi lưu thông tin trang phục.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleOpenAddVariantModal = (costume: Costume) => {
+    setTargetCostumeForVariant(costume);
+    setNewVariantSize('XL');
+    setNewVariantQuantity(2);
+    setAddVariantError(null);
+    setShowAddVariantModal(true);
+  };
+
+  const handleSaveNewVariant = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!targetCostumeForVariant) return;
+    setAddingVariant(true);
+    setAddVariantError(null);
+    try {
+      await api.post('/admin/variants', {
+        costumeId: targetCostumeForVariant.id,
+        size: newVariantSize.trim().toUpperCase(),
+        sku: `CR-${targetCostumeForVariant.slug.slice(0, 6).toUpperCase()}-${newVariantSize.trim().toUpperCase()}-${Date.now().toString().slice(-3)}`,
+        totalQuantity: Number(newVariantQuantity),
+        outOfServiceQuantity: 0,
+      });
+      setShowAddVariantModal(false);
+      fetchData();
+    } catch (err: any) {
+      setAddVariantError(err.response?.data?.message || 'Không thể thêm kích cỡ này.');
+    } finally {
+      setAddingVariant(false);
     }
   };
 
@@ -306,7 +365,7 @@ export const AdminCostumesPage: React.FC = () => {
                       {c.depositAmount.toLocaleString('vi-VN')} ₫
                     </td>
                     <td>
-                      <div className="d-flex flex-wrap gap-1">
+                      <div className="d-flex flex-wrap align-items-center gap-1">
                         {c.variants?.map((v) => (
                           <Button
                             key={v.id}
@@ -320,6 +379,16 @@ export const AdminCostumesPage: React.FC = () => {
                             {v.size}: {v.totalQuantity - v.outOfServiceQuantity}/{v.totalQuantity}
                           </Button>
                         ))}
+                        <Button
+                          variant="outline-success"
+                          size="sm"
+                          className="py-0 px-1"
+                          style={{ fontSize: '0.72rem' }}
+                          title="Thêm kích cỡ mới cho trang phục này"
+                          onClick={() => handleOpenAddVariantModal(c)}
+                        >
+                          + Size
+                        </Button>
                       </div>
                     </td>
                     <td>
@@ -463,16 +532,72 @@ export const AdminCostumesPage: React.FC = () => {
                   </Form.Group>
                 </Col>
 
+                <Col md={12}>
+                  <Form.Group>
+                    <Form.Label className="small fw-semibold">URL Hình ảnh trang phục</Form.Label>
+                    <Form.Control
+                      type="url"
+                      placeholder="https://images.unsplash.com/photo-..."
+                      value={imageUrl}
+                      onChange={(e) => setImageUrl(e.target.value)}
+                    />
+                    {imageUrl && (
+                      <div className="mt-2">
+                        <img
+                          src={imageUrl}
+                          alt="Preview"
+                          style={{ maxHeight: '90px', objectFit: 'cover', borderRadius: '4px' }}
+                          onError={(e) => ((e.target as HTMLElement).style.display = 'none')}
+                        />
+                      </div>
+                    )}
+                  </Form.Group>
+                </Col>
+
                 {!isEditMode && (
                   <Col md={12}>
-                    <Form.Group>
-                      <Form.Label className="small fw-semibold">URL Hình ảnh chính</Form.Label>
-                      <Form.Control
-                        type="url"
-                        value={imageUrl}
-                        onChange={(e) => setImageUrl(e.target.value)}
-                      />
-                    </Form.Group>
+                    <div className="p-3 bg-light rounded border mb-2">
+                      <div className="d-flex justify-content-between align-items-center mb-2">
+                        <span className="small fw-bold text-dark">
+                          Kích cỡ & Số lượng nhập kho ban đầu:
+                        </span>
+                        <Button
+                          variant="outline-primary"
+                          size="sm"
+                          className="py-0 px-2"
+                          style={{ fontSize: '0.75rem' }}
+                          onClick={() =>
+                            setCustomVariants((prev) => [
+                              ...prev,
+                              { size: `Size${prev.length + 1}`, quantity: 1 },
+                            ])
+                          }
+                        >
+                          + Thêm dòng size
+                        </Button>
+                      </div>
+                      <Row className="g-2">
+                        {customVariants.map((item, idx) => (
+                          <Col xs={6} sm={4} key={idx}>
+                            <div className="input-group input-group-sm">
+                              <span className="input-group-text fw-semibold">{item.size}</span>
+                              <input
+                                type="number"
+                                min={0}
+                                className="form-control"
+                                value={item.quantity}
+                                onChange={(e) => {
+                                  const val = Number(e.target.value);
+                                  setCustomVariants((prev) =>
+                                    prev.map((it, i) => (i === idx ? { ...it, quantity: val } : it)),
+                                  );
+                                }}
+                              />
+                            </div>
+                          </Col>
+                        ))}
+                      </Row>
+                    </div>
                   </Col>
                 )}
 
@@ -497,6 +622,57 @@ export const AdminCostumesPage: React.FC = () => {
               <Button variant="primary" size="sm" type="submit" disabled={saving}>
                 {saving ? <Spinner animation="border" size="sm" className="me-2" /> : null}
                 Lưu trang phục
+              </Button>
+            </Modal.Footer>
+          </Form>
+        </Modal>
+
+        {/* Modal Thêm Kích Cỡ Mới cho Trang Phục */}
+        <Modal show={showAddVariantModal} onHide={() => setShowAddVariantModal(false)} centered>
+          <Form onSubmit={handleSaveNewVariant}>
+            <Modal.Header closeButton>
+              <Modal.Title className="h6 fw-bold">
+                Thêm Kích Cỡ Mới: {targetCostumeForVariant?.name}
+              </Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              {addVariantError && <Alert variant="danger" className="py-2 small">{addVariantError}</Alert>}
+
+              <Form.Group className="mb-3">
+                <Form.Label className="small fw-semibold">Tên kích cỡ *</Form.Label>
+                <Form.Select
+                  value={newVariantSize}
+                  onChange={(e) => setNewVariantSize(e.target.value)}
+                  required
+                >
+                  <option value="XS">XS (Extra Small)</option>
+                  <option value="S">S (Small)</option>
+                  <option value="M">M (Medium)</option>
+                  <option value="L">L (Large)</option>
+                  <option value="XL">XL (Extra Large)</option>
+                  <option value="XXL">XXL (Double Extra Large)</option>
+                  <option value="FreeSize">FreeSize (Một kích cỡ)</option>
+                </Form.Select>
+              </Form.Group>
+
+              <Form.Group className="mb-3">
+                <Form.Label className="small fw-semibold">Số lượng nhập kho ban đầu *</Form.Label>
+                <Form.Control
+                  type="number"
+                  min={1}
+                  value={newVariantQuantity}
+                  onChange={(e) => setNewVariantQuantity(Number(e.target.value))}
+                  required
+                />
+              </Form.Group>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="secondary" size="sm" onClick={() => setShowAddVariantModal(false)}>
+                Hủy
+              </Button>
+              <Button variant="primary" size="sm" type="submit" disabled={addingVariant}>
+                {addingVariant ? <Spinner animation="border" size="sm" className="me-2" /> : null}
+                Thêm kích cỡ
               </Button>
             </Modal.Footer>
           </Form>

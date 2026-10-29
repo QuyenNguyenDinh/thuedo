@@ -48,6 +48,7 @@ Thumbs.db
 # IDE and Editor
 .idea/
 .vscode/
+*.tsbuildinfo
 *.suo
 *.ntvs*
 *.njsproj

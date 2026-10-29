@@ -21,8 +21,8 @@ export class QueryCostumesDto {
   @IsOptional()
   keyword?: string;
 
-  @ApiPropertyOptional({ description: 'Mã danh mục' })
-  @IsUUID()
+  @ApiPropertyOptional({ description: 'Mã UUID danh mục hoặc slug (VD: anime-manga)' })
+  @IsString()
   @IsOptional()
   categoryId?: string;
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Card, Nav, Button, Spinner, Alert, Modal } from 'react-bootstrap';
+import { Container, Card, Nav, Button, Spinner, Alert, Modal, Pagination } from 'react-bootstrap';
 import { Link, Navigate } from 'react-router-dom';
 import api from '../services/api';
 import { RentalOrder, OrderStatus } from '../types';
@@ -10,6 +10,9 @@ export const MyRentalsPage: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
   const [rentals, setRentals] = useState<RentalOrder[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
+  const [page, setPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [totalCount, setTotalCount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,12 +26,18 @@ export const MyRentalsPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const url =
-        selectedStatus === 'ALL'
-          ? '/rentals'
-          : `/rentals?status=${selectedStatus}`;
-      const res: any = await api.get(url);
+      const params = new URLSearchParams();
+      if (selectedStatus !== 'ALL') params.set('status', selectedStatus);
+      params.set('page', page.toString());
+      params.set('limit', '5');
+
+      const res: any = await api.get(`/rentals?${params.toString()}`);
       setRentals(res.data?.items || res.items || []);
+      const meta = res.data?.meta || res.meta;
+      if (meta) {
+        setTotalPages(meta.totalPages || 1);
+        setTotalCount(meta.total || 0);
+      }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Không thể tải danh sách đơn thuê.');
     } finally {
@@ -40,7 +49,7 @@ export const MyRentalsPage: React.FC = () => {
     if (user) {
       fetchRentals();
     }
-  }, [user, selectedStatus]);
+  }, [user, selectedStatus, page]);
 
   if (authLoading) {
     return (
@@ -96,7 +105,10 @@ export const MyRentalsPage: React.FC = () => {
           variant="pills"
           className="mb-4 bg-white p-2 rounded border shadow-sm"
           activeKey={selectedStatus}
-          onSelect={(k) => setSelectedStatus(k || 'ALL')}
+          onSelect={(k) => {
+            setSelectedStatus(k || 'ALL');
+            setPage(1);
+          }}
         >
           <Nav.Item>
             <Nav.Link eventKey="ALL">Tất cả đơn</Nav.Link>
@@ -193,6 +205,30 @@ export const MyRentalsPage: React.FC = () => {
                 </div>
               </Card>
             ))}
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="d-flex flex-wrap justify-content-between align-items-center mt-4 pt-2 border-top">
+                <span className="small text-muted">
+                  Hiển thị trang <strong>{page}</strong> / <strong>{totalPages}</strong> (Tổng cộng {totalCount} đơn thuê)
+                </span>
+                <Pagination size="sm" className="mb-0">
+                  <Pagination.Prev
+                    disabled={page <= 1}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  />
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                    <Pagination.Item key={p} active={p === page} onClick={() => setPage(p)}>
+                      {p}
+                    </Pagination.Item>
+                  ))}
+                  <Pagination.Next
+                    disabled={page >= totalPages}
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  />
+                </Pagination>
+              </div>
+            )}
           </div>
         )}
 

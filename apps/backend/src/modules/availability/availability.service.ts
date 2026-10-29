@@ -92,6 +92,7 @@ export class AvailabilityService {
       .andWhere('order.status IN (:...statuses)', { statuses: ACTIVE_HOLD_STATUSES })
       .getMany();
 
+    const today = DateUtil.getTodayInVietnam();
     let minAvailable = baseStock;
 
     for (const d of dates) {
@@ -102,9 +103,10 @@ export class AvailabilityService {
         // Normal active booking covering day d:
         const isStandardOverlap = order.startDate <= d && d <= order.endDate;
 
-        // Overdue RENTING order: if status is RENTING and d >= startDate, it occupies stock even past endDate!
+        // Overdue RENTING order: only if status is RENTING AND overdue (endDate < today),
+        // it occupies stock past scheduled endDate until returned.
         const isOverdueRenting =
-          order.status === OrderStatus.RENTING && d >= order.startDate;
+          order.status === OrderStatus.RENTING && order.endDate < today && d >= order.startDate;
 
         if (isStandardOverlap || isOverdueRenting) {
           reservedOnDay += item.quantity;
@@ -182,7 +184,8 @@ export class AvailabilityService {
       for (const item of activeItems) {
         const order = item.rentalOrder;
         const isStandardOverlap = order.startDate <= d && d <= order.endDate;
-        const isOverdueRenting = order.status === OrderStatus.RENTING && d >= order.startDate;
+        const isOverdueRenting =
+          order.status === OrderStatus.RENTING && order.endDate < today && d >= order.startDate;
 
         if (isStandardOverlap || isOverdueRenting) {
           dayReserved += item.quantity;

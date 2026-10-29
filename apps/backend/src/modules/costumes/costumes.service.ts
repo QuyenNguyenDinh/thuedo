@@ -4,7 +4,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { Costume } from '../../entities/costume.entity';
 import { CostumeImage } from '../../entities/costume-image.entity';
 import { CostumeVariant } from '../../entities/costume-variant.entity';
@@ -14,6 +14,7 @@ import { CreateCostumeDto, UpdateCostumeDto } from './dto/costume.dto';
 @Injectable()
 export class CostumesService {
   constructor(
+    private dataSource: DataSource,
     @InjectRepository(Costume)
     private costumeRepository: Repository<Costume>,
     @InjectRepository(CostumeImage)
@@ -46,7 +47,14 @@ export class CostumesService {
     }
 
     if (query.categoryId) {
-      qb.andWhere('costume.categoryId = :catId', { catId: query.categoryId });
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        query.categoryId.trim(),
+      );
+      if (isUuid) {
+        qb.andWhere('costume.categoryId = :catId', { catId: query.categoryId.trim() });
+      } else {
+        qb.andWhere('category.slug = :catSlug', { catSlug: query.categoryId.trim().toLowerCase() });
+      }
     }
 
     if (query.size) {
@@ -145,49 +153,53 @@ export class CostumesService {
       throw new ConflictException('Slug trang phục này đã tồn tại.');
     }
 
-    const costume = this.costumeRepository.create({
-      categoryId: dto.categoryId,
-      name: dto.name.trim(),
-      slug: dto.slug.trim().toLowerCase(),
-      characterName: dto.characterName?.trim() || null,
-      seriesName: dto.seriesName?.trim() || null,
-      description: dto.description.trim(),
-      dailyPrice: dto.dailyPrice,
-      depositAmount: dto.depositAmount,
-      isActive: true,
+    const savedCostumeId = await this.dataSource.transaction(async (manager) => {
+      const costume = manager.create(Costume, {
+        categoryId: dto.categoryId,
+        name: dto.name.trim(),
+        slug: dto.slug.trim().toLowerCase(),
+        characterName: dto.characterName?.trim() || null,
+        seriesName: dto.seriesName?.trim() || null,
+        description: dto.description.trim(),
+        dailyPrice: dto.dailyPrice,
+        depositAmount: dto.depositAmount,
+        isActive: true,
+      });
+
+      const savedCostume = await manager.save(Costume, costume);
+
+      // Save images atomically
+      if (dto.images && dto.images.length > 0) {
+        const images = dto.images.map((img, idx) =>
+          manager.create(CostumeImage, {
+            costumeId: savedCostume.id,
+            imageUrl: img.imageUrl,
+            altText: img.altText || savedCostume.name,
+            isPrimary: img.isPrimary !== undefined ? img.isPrimary : idx === 0,
+            displayOrder: img.displayOrder !== undefined ? img.displayOrder : idx,
+          }),
+        );
+        await manager.save(CostumeImage, images);
+      }
+
+      // Save variants atomically
+      if (dto.variants && dto.variants.length > 0) {
+        const variants = dto.variants.map((v) =>
+          manager.create(CostumeVariant, {
+            costumeId: savedCostume.id,
+            size: v.size.trim().toUpperCase(),
+            sku: v.sku.trim(),
+            totalQuantity: v.totalQuantity,
+            outOfServiceQuantity: v.outOfServiceQuantity || 0,
+          }),
+        );
+        await manager.save(CostumeVariant, variants);
+      }
+
+      return savedCostume.id;
     });
 
-    const savedCostume = await this.costumeRepository.save(costume);
-
-    // Save images
-    if (dto.images && dto.images.length > 0) {
-      const images = dto.images.map((img, idx) =>
-        this.imageRepository.create({
-          costumeId: savedCostume.id,
-          imageUrl: img.imageUrl,
-          altText: img.altText || savedCostume.name,
-          isPrimary: img.isPrimary !== undefined ? img.isPrimary : idx === 0,
-          displayOrder: img.displayOrder !== undefined ? img.displayOrder : idx,
-        }),
-      );
-      await this.imageRepository.save(images);
-    }
-
-    // Save variants
-    if (dto.variants && dto.variants.length > 0) {
-      const variants = dto.variants.map((v) =>
-        this.variantRepository.create({
-          costumeId: savedCostume.id,
-          size: v.size.trim().toUpperCase(),
-          sku: v.sku.trim(),
-          totalQuantity: v.totalQuantity,
-          outOfServiceQuantity: v.outOfServiceQuantity || 0,
-        }),
-      );
-      await this.variantRepository.save(variants);
-    }
-
-    return this.findById(savedCostume.id, true);
+    return this.findById(savedCostumeId, true);
   }
 
   async update(id: string, dto: UpdateCostumeDto) {
@@ -196,16 +208,34 @@ export class CostumesService {
       throw new NotFoundException('Không tìm thấy trang phục.');
     }
 
-    if (dto.categoryId !== undefined) costume.categoryId = dto.categoryId;
-    if (dto.name !== undefined) costume.name = dto.name.trim();
-    if (dto.characterName !== undefined) costume.characterName = dto.characterName?.trim() || null;
-    if (dto.seriesName !== undefined) costume.seriesName = dto.seriesName?.trim() || null;
-    if (dto.description !== undefined) costume.description = dto.description.trim();
-    if (dto.dailyPrice !== undefined) costume.dailyPrice = dto.dailyPrice;
-    if (dto.depositAmount !== undefined) costume.depositAmount = dto.depositAmount;
-    if (dto.isActive !== undefined) costume.isActive = dto.isActive;
+    await this.dataSource.transaction(async (manager) => {
+      if (dto.categoryId !== undefined) costume.categoryId = dto.categoryId;
+      if (dto.name !== undefined) costume.name = dto.name.trim();
+      if (dto.characterName !== undefined) costume.characterName = dto.characterName?.trim() || null;
+      if (dto.seriesName !== undefined) costume.seriesName = dto.seriesName?.trim() || null;
+      if (dto.description !== undefined) costume.description = dto.description.trim();
+      if (dto.dailyPrice !== undefined) costume.dailyPrice = dto.dailyPrice;
+      if (dto.depositAmount !== undefined) costume.depositAmount = dto.depositAmount;
+      if (dto.isActive !== undefined) costume.isActive = dto.isActive;
 
-    await this.costumeRepository.save(costume);
+      await manager.save(Costume, costume);
+
+      // Update images if provided
+      if (dto.images && dto.images.length > 0) {
+        await manager.delete(CostumeImage, { costumeId: id });
+        const images = dto.images.map((img, idx) =>
+          manager.create(CostumeImage, {
+            costumeId: id,
+            imageUrl: img.imageUrl,
+            altText: img.altText || costume.name,
+            isPrimary: img.isPrimary !== undefined ? img.isPrimary : idx === 0,
+            displayOrder: img.displayOrder !== undefined ? img.displayOrder : idx,
+          }),
+        );
+        await manager.save(CostumeImage, images);
+      }
+    });
+
     return this.findById(id, true);
   }
 

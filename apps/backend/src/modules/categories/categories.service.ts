@@ -39,6 +39,7 @@ export class CategoriesService {
       results.push({
         ...cat,
         costumeCount,
+        costumesCount: costumeCount,
       });
     }
     return results;

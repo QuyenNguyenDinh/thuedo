@@ -18,6 +18,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Category } from '../../types';
 
 interface CategoryWithCount extends Category {
+  costumeCount?: number;
   costumesCount?: number;
 }
 
@@ -237,7 +238,7 @@ export const AdminCategoriesPage: React.FC = () => {
                         </td>
                         <td className="text-center">
                           <Badge bg="info" className="px-2 py-1">
-                            {cat.costumesCount ?? 0} bộ
+                            {cat.costumesCount ?? cat.costumeCount ?? 0} bộ
                           </Badge>
                         </td>
                         <td className="text-end pe-4">
@@ -336,10 +337,10 @@ export const AdminCategoriesPage: React.FC = () => {
             <p className="small mb-0">
               Bạn có chắc chắn muốn xóa danh mục <strong>{deletingCategory?.name}</strong>?
             </p>
-            {deletingCategory?.costumesCount && deletingCategory.costumesCount > 0 ? (
+            {((deletingCategory?.costumesCount ?? deletingCategory?.costumeCount ?? 0) > 0) ? (
               <Alert variant="warning" className="mt-3 mb-0 small">
                 <i className="bi bi-exclamation-triangle-fill me-1"></i>
-                Danh mục này đang có <strong>{deletingCategory.costumesCount}</strong> trang phục. Vui lòng chuyển các trang phục sang danh mục khác trước khi xóa.
+                Danh mục này đang có <strong>{deletingCategory?.costumesCount ?? deletingCategory?.costumeCount}</strong> trang phục. Vui lòng chuyển các trang phục sang danh mục khác trước khi xóa.
               </Alert>
             ) : null}
           </Modal.Body>

@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { RentalOrder } from '../../entities/rental-order.entity';
 import { RentalOrderItem } from '../../entities/rental-order-item.entity';
 import { Costume } from '../../entities/costume.entity';
@@ -17,6 +17,7 @@ import { CreateVariantDto, UpdateStockDto } from './dto/admin-actions.dto';
 @Injectable()
 export class AdminService {
   constructor(
+    private dataSource: DataSource,
     @InjectRepository(RentalOrder)
     private orderRepository: Repository<RentalOrder>,
     @InjectRepository(RentalOrderItem)
@@ -145,35 +146,43 @@ export class AdminService {
    * Update stock with safety pre-flight check.
    */
   async updateVariantStock(variantId: string, dto: UpdateStockDto) {
-    const variant = await this.variantRepository.findOne({ where: { id: variantId } });
-    if (!variant) {
-      throw new NotFoundException('Không tìm thấy biến thể kích cỡ.');
-    }
+    return this.dataSource.transaction(async (manager) => {
+      const variant = await manager
+        .createQueryBuilder(CostumeVariant, 'variant')
+        .setLock('pessimistic_write')
+        .where('variant.id = :id', { id: variantId })
+        .getOne();
 
-    const outOfService =
-      dto.outOfServiceQuantity !== undefined
-        ? dto.outOfServiceQuantity
-        : variant.outOfServiceQuantity;
+      if (!variant) {
+        throw new NotFoundException('Không tìm thấy biến thể kích cỡ.');
+      }
 
-    // Safety check: ensure stock reduction does not violate active bookings!
-    const safetyCheck = await this.availabilityService.canReduceStock(
-      variantId,
-      dto.totalQuantity,
-      outOfService,
-    );
+      const outOfService =
+        dto.outOfServiceQuantity !== undefined
+          ? dto.outOfServiceQuantity
+          : variant.outOfServiceQuantity;
 
-    if (!safetyCheck.allowed) {
-      throw new BadRequestException(safetyCheck.reason);
-    }
+      // Safety check: ensure stock reduction does not violate active bookings inside transaction!
+      const safetyCheck = await this.availabilityService.canReduceStock(
+        variantId,
+        dto.totalQuantity,
+        outOfService,
+        manager,
+      );
 
-    variant.totalQuantity = dto.totalQuantity;
-    variant.outOfServiceQuantity = outOfService;
+      if (!safetyCheck.allowed) {
+        throw new BadRequestException(safetyCheck.reason);
+      }
 
-    const saved = await this.variantRepository.save(variant);
-    return {
-      message: 'Cập nhật số lượng tồn kho thành công.',
-      variant: saved,
-    };
+      variant.totalQuantity = dto.totalQuantity;
+      variant.outOfServiceQuantity = outOfService;
+
+      const saved = await manager.save(CostumeVariant, variant);
+      return {
+        message: 'Cập nhật số lượng tồn kho thành công.',
+        variant: saved,
+      };
+    });
   }
 }
 

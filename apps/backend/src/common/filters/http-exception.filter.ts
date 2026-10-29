@@ -32,6 +32,16 @@ export class GlobalHttpExceptionFilter implements ExceptionFilter {
         message = resObj.message || message;
         errorName = resObj.error || exception.name;
       }
+    } else if (
+      exception instanceof Error &&
+      (exception.message.includes('Định dạng ngày') ||
+        exception.message.includes('không tồn tại trên lịch') ||
+        exception.message.includes('Tháng không hợp lệ') ||
+        exception.message.includes('Ngày trả không được trước ngày nhận'))
+    ) {
+      status = HttpStatus.BAD_REQUEST;
+      errorName = 'BadRequest';
+      message = exception.message;
     } else {
       this.logger.error(
         `[UnhandledException] ${request.method} ${request.url}`,

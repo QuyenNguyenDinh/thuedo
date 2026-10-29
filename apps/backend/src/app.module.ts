@@ -19,8 +19,12 @@ import { AdminModule } from './modules/admin/admin.module';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: [
-        path.resolve(__dirname, '../../../.env'),
-        path.resolve(__dirname, '../.env'),
+        path.resolve(process.cwd(), '.env'),
+        path.resolve(process.cwd(), 'apps/backend/.env'),
+        path.resolve(__dirname, '../../../../.env'), // monorepo root when compiled in dist/src
+        path.resolve(__dirname, '../../../.env'),    // monorepo root when in src
+        path.resolve(__dirname, '../../.env'),       // apps/backend/.env when compiled in dist/src
+        path.resolve(__dirname, '../.env'),          // apps/backend/.env when in src
       ],
     }),
     ThrottlerModule.forRootAsync({
@@ -54,6 +58,15 @@ import { AdminModule } from './modules/admin/admin.module';
       dataSourceFactory: async (options) => {
         const anyOptions = options as any;
         const dbHost = process.env.DB_HOST || anyOptions?.host;
+        const isProduction = process.env.NODE_ENV === 'production';
+
+        if (isProduction && dbHost === 'memory') {
+          console.error('❌ Môi trường PRODUCTION tuyệt đối không được sử dụng DB_HOST=memory!');
+          throw new Error(
+            'Cấu hình không hợp lệ: DB_HOST=memory bị cấm hoàn toàn trong môi trường production.',
+          );
+        }
+
         if (dbHost === 'memory') {
           const { createMemoryDataSource } = await import('./database/memory-data-source');
           return createMemoryDataSource();

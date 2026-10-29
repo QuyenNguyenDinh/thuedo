@@ -47,14 +47,16 @@ export class PricingService {
       throw new BadRequestException('Danh sách mặt hàng thuê không được rỗng.');
     }
 
-    if (DateUtil.isDateInPast(startDate)) {
-      throw new BadRequestException('Ngày nhận đồ không được ở trong quá khứ.');
-    }
-
     let rentalDays: number;
     try {
+      DateUtil.parseDateString(startDate);
+      DateUtil.parseDateString(endDate);
+      if (DateUtil.isDateInPast(startDate)) {
+        throw new BadRequestException('Ngày nhận đồ không được ở trong quá khứ.');
+      }
       rentalDays = DateUtil.calculateRentalDays(startDate, endDate);
     } catch (err: any) {
+      if (err instanceof BadRequestException) throw err;
       throw new BadRequestException(err.message || 'Khoảng ngày thuê không hợp lệ.');
     }
 

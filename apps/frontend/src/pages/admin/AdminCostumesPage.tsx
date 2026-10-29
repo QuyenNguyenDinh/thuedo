@@ -11,6 +11,7 @@ import {
   Modal,
   Row,
   Col,
+  Pagination,
 } from 'react-bootstrap';
 import { Navigate } from 'react-router-dom';
 import api from '../../services/api';
@@ -28,6 +29,8 @@ export const AdminCostumesPage: React.FC = () => {
   // Search keyword & category filter
   const [keyword, setKeyword] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [page, setPage] = useState<number>(1);
+  const pageSize = 10;
 
   // Add / Edit Costume Modal
   const [showModal, setShowModal] = useState<boolean>(false);
@@ -271,6 +274,9 @@ export const AdminCostumesPage: React.FC = () => {
     return matchKw && matchCat;
   });
 
+  const totalPages = Math.max(1, Math.ceil(filteredCostumes.length / pageSize));
+  const paginatedCostumes = filteredCostumes.slice((page - 1) * pageSize, page * pageSize);
+
   return (
     <div className="py-4">
       <Container>
@@ -296,13 +302,19 @@ export const AdminCostumesPage: React.FC = () => {
                 type="text"
                 placeholder="Tìm theo tên trang phục hoặc nhân vật..."
                 value={keyword}
-                onChange={(e) => setKeyword(e.target.value)}
+                onChange={(e) => {
+                  setKeyword(e.target.value);
+                  setPage(1);
+                }}
               />
             </Col>
             <Col md={4}>
               <Form.Select
                 value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
+                onChange={(e) => {
+                  setSelectedCategory(e.target.value);
+                  setPage(1);
+                }}
               >
                 <option value="">Tất cả danh mục</option>
                 {categories.map((cat) => (
@@ -337,7 +349,7 @@ export const AdminCostumesPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredCostumes.map((c) => (
+                {paginatedCostumes.map((c) => (
                   <tr key={c.id}>
                     <td style={{ minWidth: '220px' }}>
                       <div className="d-flex align-items-center">
@@ -421,6 +433,32 @@ export const AdminCostumesPage: React.FC = () => {
                 ))}
               </tbody>
             </Table>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="d-flex flex-wrap justify-content-between align-items-center p-3 border-top bg-light">
+                <span className="small text-muted">
+                  Trang <strong>{page}</strong> / <strong>{totalPages}</strong> (Hiển thị{' '}
+                  {(page - 1) * pageSize + 1} - {Math.min(page * pageSize, filteredCostumes.length)} trên tổng số{' '}
+                  {filteredCostumes.length} trang phục)
+                </span>
+                <Pagination size="sm" className="mb-0">
+                  <Pagination.Prev
+                    disabled={page <= 1}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  />
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                    <Pagination.Item key={p} active={p === page} onClick={() => setPage(p)}>
+                      {p}
+                    </Pagination.Item>
+                  ))}
+                  <Pagination.Next
+                    disabled={page >= totalPages}
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  />
+                </Pagination>
+              </div>
+            )}
           </Card>
         )}
 

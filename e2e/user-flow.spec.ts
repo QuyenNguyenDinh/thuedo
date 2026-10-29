@@ -9,49 +9,65 @@ test.describe('CosRent End-to-End User Journeys', () => {
 
     // 2. Click explore button or navigate to costumes
     const exploreBtn = page.locator('text=Xem toàn bộ kho đồ').first();
-    if (await exploreBtn.isVisible()) {
-      await exploreBtn.click();
-    } else {
-      await page.goto('/costumes');
-    }
+    await expect(exploreBtn).toBeVisible();
+    await exploreBtn.click();
     await expect(page).toHaveURL(/\/costumes/);
 
     // 3. Verify costume listing is visible
-    await expect(page.locator('.costume-card, .card').first()).toBeVisible();
+    const firstCard = page.locator('.costume-card, .card').first();
+    await expect(firstCard).toBeVisible();
 
     // 4. Navigate to detail page
-    const detailLink = page.locator('text=Chi tiết & Đặt thuê').first();
-    if (await detailLink.isVisible()) {
-      await detailLink.click();
-      await expect(page).toHaveURL(/\/costumes\/[a-zA-Z0-9-]+/);
-      await expect(page.locator('text=Giá thuê / ngày:')).toBeVisible();
-      await expect(page.locator('text=Tiền cọc quy định:')).toBeVisible();
-    }
+    const detailLink = page.locator('a:has-text("Chi tiết & Đặt thuê"), a:has-text("Xem chi tiết")').first();
+    await expect(detailLink).toBeVisible();
+    await detailLink.click();
+
+    // Verify detail page elements
+    await expect(page).toHaveURL(/\/costumes\/[a-zA-Z0-9-]+/);
+    await expect(page.locator('text=Giá thuê / ngày:')).toBeVisible();
+    await expect(page.locator('text=Tiền cọc quy định:')).toBeVisible();
+    await expect(page.locator('text=Chọn kích cỡ (Size):')).toBeVisible();
   });
 
   test('Customer Authentication & Navigation Flow', async ({ page }) => {
     // 1. Go to Login page
     await page.goto('/login');
-    await expect(page.locator('h4, h2')).toContainText('Đăng nhập');
+    await expect(page.locator('h3, h2, h4')).toContainText('Đăng nhập');
 
     // 2. Fill login form with seed user
-    await page.fill('input[type="email"]', 'customer@cosrent.com');
-    await page.fill('input[type="password"]', 'Customer123@');
+    await page.fill('#email', 'customer@cosrent.com');
+    await page.fill('#password', 'Customer123@');
     await page.click('button[type="submit"]');
 
-    // 3. Authenticated customer lands on home or rentals
-    await expect(page).toHaveURL(/\/(costumes|my-rentals)?/);
+    // 3. Authenticated customer must see user menu and rental history links
+    await expect(page.locator('#dropdown-user, text=Đơn thuê của tôi')).toBeVisible({ timeout: 10000 });
+
+    // 4. Navigate to My Rentals
+    await page.goto('/my-rentals');
+    await expect(page.locator('h3')).toContainText('Đơn Thuê Của Tôi');
   });
 
-  test('Admin Flow: Dashboard & Rental Management Views', async ({ page }) => {
+  test('Admin Flow: Dashboard, Rental Management & Category Management Views', async ({ page }) => {
     // 1. Login as Admin
     await page.goto('/login');
-    await page.fill('input[type="email"]', 'admin@cosrent.com');
-    await page.fill('input[type="password"]', 'Admin123@');
+    await page.fill('#email', 'admin@cosrent.com');
+    await page.fill('#password', 'Admin123@');
     await page.click('button[type="submit"]');
 
-    // 2. Direct navigate to admin dashboard
+    // 2. Wait for admin credentials to load
+    await expect(page.locator('#dropdown-user, text=Dashboard')).toBeVisible({ timeout: 10000 });
+
+    // 3. Direct navigate to admin dashboard
     await page.goto('/admin/dashboard');
     await expect(page.locator('h3, h4')).toContainText(/Tổng Quan|Dashboard|Quản trị/i);
+    await expect(page.locator('text=Tổng doanh thu')).toBeVisible();
+
+    // 4. Admin navigates to Category Management
+    await page.goto('/admin/categories');
+    await expect(page.locator('h3')).toContainText('Quản Lý Danh Mục Trang Phục');
+
+    // 5. Admin navigates to Rental Orders Management
+    await page.goto('/admin/rentals');
+    await expect(page.locator('h3')).toContainText('Quản Lý Đơn Thuê Trang Phục');
   });
 });

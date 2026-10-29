@@ -61,14 +61,16 @@ export class RentalsService {
       );
     }
 
-    if (DateUtil.isDateInPast(dto.startDate)) {
-      throw new BadRequestException('Ngày nhận đồ không được ở trong quá khứ.');
-    }
-
     let rentalDays: number;
     try {
+      DateUtil.parseDateString(dto.startDate);
+      DateUtil.parseDateString(dto.endDate);
+      if (DateUtil.isDateInPast(dto.startDate)) {
+        throw new BadRequestException('Ngày nhận đồ không được ở trong quá khứ.');
+      }
       rentalDays = DateUtil.calculateRentalDays(dto.startDate, dto.endDate);
     } catch (err: any) {
+      if (err instanceof BadRequestException) throw err;
       throw new BadRequestException(err.message || 'Khoảng ngày thuê không hợp lệ.');
     }
 
@@ -89,7 +91,7 @@ export class RentalsService {
       const lockedVariants = await queryRunner.manager
         .createQueryBuilder(CostumeVariant, 'variant')
         .setLock('pessimistic_write')
-        .leftJoinAndSelect('variant.costume', 'costume')
+        .innerJoinAndSelect('variant.costume', 'costume')
         .whereInIds(variantIds)
         .orderBy('variant.id', 'ASC')
         .getMany();

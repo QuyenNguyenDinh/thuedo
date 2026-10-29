@@ -58,7 +58,7 @@ export class CostumesService {
     }
 
     if (query.size) {
-      qb.andWhere('variant.size = :size', { size: query.size.trim().toUpperCase() });
+      qb.andWhere('UPPER(variant.size) = :size', { size: query.size.trim().toUpperCase() });
     }
 
     if (query.minPrice !== undefined) {

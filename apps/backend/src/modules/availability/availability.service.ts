@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, QueryRunner } from 'typeorm';
+import { Repository, QueryRunner, EntityManager } from 'typeorm';
 import { CostumeVariant } from '../../entities/costume-variant.entity';
 import { RentalOrder } from '../../entities/rental-order.entity';
 import { RentalOrderItem } from '../../entities/rental-order-item.entity';
@@ -53,14 +53,16 @@ export class AvailabilityService {
     endDate: string,
     queryRunner?: QueryRunner,
   ): Promise<VariantAvailabilityResult> {
-    if (DateUtil.isDateInPast(startDate)) {
-      throw new BadRequestException('Ngày nhận đồ không được ở trong quá khứ.');
-    }
-
     let rentalDays: number;
     try {
+      DateUtil.parseDateString(startDate);
+      DateUtil.parseDateString(endDate);
+      if (DateUtil.isDateInPast(startDate)) {
+        throw new BadRequestException('Ngày nhận đồ không được ở trong quá khứ.');
+      }
       rentalDays = DateUtil.calculateRentalDays(startDate, endDate);
     } catch (err: any) {
+      if (err instanceof BadRequestException) throw err;
       throw new BadRequestException(err.message || 'Khoảng ngày thuê không hợp lệ.');
     }
 
@@ -140,6 +142,7 @@ export class AvailabilityService {
     variantId: string,
     newTotalQuantity: number,
     newOutOfServiceQuantity: number,
+    queryRunnerOrManager?: QueryRunner | EntityManager,
   ): Promise<{ allowed: boolean; maxCommitted: number; reason?: string }> {
     const newBase = newTotalQuantity - newOutOfServiceQuantity;
     if (newBase < 0) {
@@ -150,8 +153,14 @@ export class AvailabilityService {
       };
     }
 
-    // Find all future active bookings for this variant
-    const activeItems = await this.orderItemRepository
+    // Find all future active bookings for this variant using transactional manager if provided
+    const itemRepo = queryRunnerOrManager
+      ? 'manager' in queryRunnerOrManager
+        ? (queryRunnerOrManager as QueryRunner).manager.getRepository(RentalOrderItem)
+        : (queryRunnerOrManager as EntityManager).getRepository(RentalOrderItem)
+      : this.orderItemRepository;
+
+    const activeItems = await itemRepo
       .createQueryBuilder('item')
       .innerJoinAndSelect('item.rentalOrder', 'order')
       .where('item.costumeVariantId = :variantId', { variantId })

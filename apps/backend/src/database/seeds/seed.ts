@@ -549,7 +549,7 @@ export async function runSeed(dataSource: DataSource) {
         if (!v) {
           v = variantRepo.create({
             costumeId: costume.id,
-            size: vDef.size,
+            size: vDef.size.trim().toUpperCase(),
             sku: vDef.sku,
             totalQuantity: vDef.qty,
             outOfServiceQuantity: 0,

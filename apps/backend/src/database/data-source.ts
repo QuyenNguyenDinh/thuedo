@@ -2,7 +2,18 @@ import { DataSource, DataSourceOptions } from 'typeorm';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
-dotenv.config({ path: path.resolve(__dirname, '../../../../.env') });
+const envPaths = [
+  path.resolve(process.cwd(), '.env'),
+  path.resolve(process.cwd(), 'apps/backend/.env'),
+  path.resolve(__dirname, '../../../../.env'),
+  path.resolve(__dirname, '../../../.env'),
+  path.resolve(__dirname, '../../.env'),
+  path.resolve(__dirname, '../.env'),
+];
+
+for (const p of envPaths) {
+  dotenv.config({ path: p });
+}
 
 export const dataSourceOptions: DataSourceOptions = {
   type: 'postgres',

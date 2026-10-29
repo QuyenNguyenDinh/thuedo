@@ -74,18 +74,18 @@
       "json",
       "ts"
     ],
-    "rootDir": "src",
+    "rootDir": "test/unit",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "collectCoverageFrom": [
-      "**/*.(t|j)s",
-      "!**/*.entity.(t|j)s",
-      "!**/*.dto.(t|j)s",
-      "!main.(t|j)s"
+      "../../src/**/*.(t|j)s",
+      "!../../src/**/*.entity.(t|j)s",
+      "!../../src/**/*.dto.(t|j)s",
+      "!../../src/main.(t|j)s"
     ],
-    "coverageDirectory": "../coverage",
+    "coverageDirectory": "../../coverage",
     "testEnvironment": "node"
   }
 }

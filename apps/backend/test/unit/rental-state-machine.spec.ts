@@ -2,17 +2,17 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { RentalsService } from './rentals.service';
-import { RentalOrder } from '../../entities/rental-order.entity';
-import { RentalOrderItem } from '../../entities/rental-order-item.entity';
-import { RentalStatusHistory } from '../../entities/rental-status-history.entity';
-import { CostumeVariant } from '../../entities/costume-variant.entity';
-import { User } from '../../entities/user.entity';
-import { AvailabilityService } from '../availability/availability.service';
-import { OrderStatus } from '../../common/enums/order-status.enum';
-import { Role } from '../../common/enums/role.enum';
+import { RentalsService } from '../../src/modules/rentals/rentals.service';
+import { RentalOrder } from '../../src/entities/rental-order.entity';
+import { RentalOrderItem } from '../../src/entities/rental-order-item.entity';
+import { RentalStatusHistory } from '../../src/entities/rental-status-history.entity';
+import { CostumeVariant } from '../../src/entities/costume-variant.entity';
+import { User } from '../../src/entities/user.entity';
+import { AvailabilityService } from '../../src/modules/availability/availability.service';
+import { OrderStatus } from '../../src/common/enums/order-status.enum';
+import { Role } from '../../src/common/enums/role.enum';
 
-describe('Rental Order State Machine & Business Rules', () => {
+describe('Rental Order State Machine & Business Rules (Unit Test)', () => {
   let service: RentalsService;
   let mockOrderRepo: any;
   let mockHistoryRepo: any;
@@ -196,4 +196,3 @@ describe('Rental Order State Machine & Business Rules', () => {
     });
   });
 });
-

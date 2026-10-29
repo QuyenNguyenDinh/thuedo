@@ -1,22 +1,26 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, Matches, IsNotEmpty } from 'class-validator';
+import { IsOptional, IsString, Matches, IsNotEmpty, ValidateIf } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class UpdateProfileDto {
   @ApiProperty({ example: 'Nguyễn Văn A', description: 'Họ và tên mới' })
-  @IsString()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @IsString({ message: 'Họ và tên phải là chuỗi.' })
   @IsNotEmpty({ message: 'Họ và tên không được để trống.' })
   fullName: string;
 
   @ApiProperty({ example: '0912345678', description: 'Số điện thoại liên hệ' })
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString()
-  @Matches(/^(0|\+84)[3|5|7|8|9][0-9]{8}$/, {
+  @Matches(/^(?:0|\+84)[35789][0-9]{8}$/, {
     message: 'Số điện thoại không đúng định dạng số di động Việt Nam.',
   })
   phone: string;
 
   @ApiProperty({ example: 'Số 12 Đại Cồ Việt, Hai Bà Trưng, Hà Nội', required: false })
-  @IsString()
-  @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsString({ message: 'Địa chỉ phải là chuỗi.' })
   address?: string;
 }
 

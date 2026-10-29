@@ -3,6 +3,8 @@ import { ConflictException, BadRequestException } from '@nestjs/common';
 import { createMemoryDataSource } from '../src/database/memory-data-source';
 import { RentalsService } from '../src/modules/rentals/rentals.service';
 import { AvailabilityService } from '../src/modules/availability/availability.service';
+import { AdminService } from '../src/modules/admin/admin.service';
+import { Costume } from '../src/entities/costume.entity';
 import { CostumeVariant } from '../src/entities/costume-variant.entity';
 import { RentalOrder } from '../src/entities/rental-order.entity';
 import { RentalOrderItem } from '../src/entities/rental-order-item.entity';
@@ -15,12 +17,14 @@ describe('Real Database Concurrency & Race Condition Integration Test', () => {
   let dataSource: DataSource;
   let rentalsService: RentalsService;
   let availabilityService: AvailabilityService;
+  let adminService: AdminService;
   let variantRepo: Repository<CostumeVariant>;
   let orderRepo: Repository<RentalOrder>;
   let userRepo: Repository<User>;
 
   beforeAll(async () => {
     dataSource = await createMemoryDataSource();
+    const costumeRepo = dataSource.getRepository(Costume);
     variantRepo = dataSource.getRepository(CostumeVariant);
     orderRepo = dataSource.getRepository(RentalOrder);
     const itemRepo = dataSource.getRepository(RentalOrderItem);
@@ -35,6 +39,14 @@ describe('Real Database Concurrency & Race Condition Integration Test', () => {
       historyRepo,
       variantRepo,
       userRepo,
+      availabilityService,
+    );
+    adminService = new AdminService(
+      dataSource,
+      orderRepo,
+      itemRepo,
+      costumeRepo,
+      variantRepo,
       availabilityService,
     );
   }, 30000);
@@ -80,15 +92,20 @@ describe('Real Database Concurrency & Race Condition Integration Test', () => {
       items: [{ costumeVariantId: targetVariant.id, quantity: 1 }],
     };
 
-    // First request reserves the only available unit
-    const orderA = await rentalsService.createRental(userA.id, payloadA);
-    expect(orderA).toBeDefined();
-    expect(orderA.status).toBe(OrderStatus.PENDING);
-
-    // Second request attempting to book the same last unit must be rejected with 409 Conflict
-    await expect(
+    // Fire both requests concurrently using Promise.allSettled
+    const results = await Promise.allSettled([
+      rentalsService.createRental(userA.id, payloadA),
       rentalsService.createRental(userB.id, payloadB),
-    ).rejects.toThrow(ConflictException);
+    ]);
+
+    const fulfilled = results.filter((r) => r.status === 'fulfilled') as PromiseFulfilledResult<RentalOrder>[];
+    const rejected = results.filter((r) => r.status === 'rejected') as PromiseRejectedResult[];
+
+    // Exactly 1 checkout succeeds, and exactly 1 fails due to stock depletion
+    expect(fulfilled).toHaveLength(1);
+    expect(rejected).toHaveLength(1);
+    expect(fulfilled[0].value.status).toBe(OrderStatus.PENDING);
+    expect(rejected[0].reason).toBeInstanceOf(ConflictException);
 
     // Verify stock availability afterwards is 0
     const availAfter = await availabilityService.checkVariantAvailability(
@@ -162,5 +179,49 @@ describe('Real Database Concurrency & Race Condition Integration Test', () => {
     );
     expect(validReturn.order.status).toBe(OrderStatus.RETURNED);
     expect(validReturn.order.actualDepositReturned).toBe(order.totalDeposit);
+  });
+
+  it('5. should handle concurrent rental checkout and admin stock reduction safely without overselling', async () => {
+    const variants = await variantRepo.find({ relations: ['costume'] });
+    const targetVariant = variants[1] || variants[0];
+
+    // Set stock to 2
+    targetVariant.totalQuantity = 2;
+    targetVariant.outOfServiceQuantity = 0;
+    await variantRepo.save(targetVariant);
+
+    const customers = await userRepo.find({ where: { role: 'CUSTOMER' as any } });
+    const customer = customers[0];
+
+    const rentalPayload = {
+      customerName: 'Khách Đặt Cạnh Tranh',
+      customerPhone: '0905555555',
+      startDate: '2027-05-10',
+      endDate: '2027-05-12',
+      items: [{ costumeVariantId: targetVariant.id, quantity: 2 }],
+    };
+
+    // Concurrently: customer tries to book 2 units, and admin tries to reduce stock to 0
+    const [rentalResult, adminResult] = await Promise.allSettled([
+      rentalsService.createRental(customer.id, rentalPayload),
+      adminService.updateVariantStock(targetVariant.id, { totalQuantity: 0, outOfServiceQuantity: 0 }),
+    ]);
+
+    // Either rental succeeded first (blocking admin from reducing to 0)
+    // OR admin reduced to 0 first (blocking rental due to 0 available stock)
+    // Under no circumstances can both succeed with overselling!
+    const bothSucceeded = rentalResult.status === 'fulfilled' && adminResult.status === 'fulfilled';
+    expect(bothSucceeded).toBe(false);
+
+    // Verify database state is consistent
+    const activeOrders = await orderRepo
+      .createQueryBuilder('order')
+      .innerJoin('order.items', 'item')
+      .where('item.costumeVariantId = :variantId', { variantId: targetVariant.id })
+      .andWhere('order.startDate = :startDate', { startDate: '2027-05-10' })
+      .getMany();
+
+    const freshVariant = await variantRepo.findOne({ where: { id: targetVariant.id } });
+    expect(activeOrders.length * 2).toBeLessThanOrEqual(freshVariant!.totalQuantity);
   });
 });

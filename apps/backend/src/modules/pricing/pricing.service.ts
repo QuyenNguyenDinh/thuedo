@@ -65,6 +65,10 @@ export class PricingService {
     const calculatedItems: CalculatedQuoteItem[] = [];
 
     for (const item of items) {
+      if (!item.quantity || item.quantity <= 0) {
+        throw new BadRequestException('Số lượng thuê của mỗi mặt hàng phải lớn hơn 0.');
+      }
+
       const variant = await this.variantRepository.findOne({
         where: { id: item.costumeVariantId },
         relations: ['costume'],

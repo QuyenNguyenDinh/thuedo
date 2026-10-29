@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { PricingService } from './pricing.service';
-import { CostumeVariant } from '../../entities/costume-variant.entity';
-import { DateUtil } from '../../common/utils/date.util';
+import { PricingService } from '../../src/modules/pricing/pricing.service';
+import { CostumeVariant } from '../../src/entities/costume-variant.entity';
+import { DateUtil } from '../../src/common/utils/date.util';
 
-describe('PricingService', () => {
+describe('PricingService (Unit Test)', () => {
   let service: PricingService;
   let mockVariantRepo: any;
 
@@ -47,50 +47,30 @@ describe('PricingService', () => {
 
   describe('calculateQuote', () => {
     it('should correctly calculate total rental fee and deposit for multiple days and quantity', async () => {
-      // Mock variant with dailyPrice 200,000 VND and deposit 600,000 VND
       mockVariantRepo.findOne.mockResolvedValue({
         id: 'var-1',
-        size: 'M',
+        size: 'L',
+        costumeId: 'cos-1',
         costume: {
           id: 'cos-1',
-          name: 'Raiden Shogun',
+          name: 'Raiden Shogun Kimono',
           dailyPrice: 200000,
           depositAmount: 600000,
           isActive: true,
         },
       });
 
-      // 3 days: 2026-11-10 to 2026-11-12, quantity: 2
       const quote = await service.calculateQuote('2026-11-10', '2026-11-12', [
         { costumeVariantId: 'var-1', quantity: 2 },
       ]);
 
       expect(quote.rentalDays).toBe(3);
-      // Line rental: 200,000 * 3 * 2 = 1,200,000 VND
-      expect(quote.totalRentalFee).toBe(1200000);
-      // Line deposit: 600,000 * 2 = 1,200,000 VND
-      expect(quote.totalDeposit).toBe(1200000);
-      // Total due at store: 1,200,000 + 1,200,000 = 2,400,000 VND
+      expect(quote.totalRentalFee).toBe(1200000); // 200,000 * 3 days * 2
+      expect(quote.totalDeposit).toBe(1200000); // 600,000 * 2
       expect(quote.totalDueAtStore).toBe(2400000);
-    });
-
-    it('should throw BadRequestException if product is inactive/hidden', async () => {
-      mockVariantRepo.findOne.mockResolvedValue({
-        id: 'var-1',
-        costume: {
-          id: 'cos-1',
-          name: 'Hidden Costume',
-          dailyPrice: 100000,
-          depositAmount: 300000,
-          isActive: false, // inactive
-        },
-      });
-
-      await expect(
-        service.calculateQuote('2026-11-10', '2026-11-12', [
-          { costumeVariantId: 'var-1', quantity: 1 },
-        ]),
-      ).rejects.toThrow(BadRequestException);
+      expect(quote.items).toHaveLength(1);
+      expect(quote.items[0].lineRentalFee).toBe(1200000);
+      expect(quote.items[0].lineDeposit).toBe(1200000);
     });
 
     it('should throw NotFoundException if variant does not exist', async () => {
@@ -98,10 +78,44 @@ describe('PricingService', () => {
 
       await expect(
         service.calculateQuote('2026-11-10', '2026-11-12', [
-          { costumeVariantId: 'non-existent', quantity: 1 },
+          { costumeVariantId: 'invalid-id', quantity: 1 },
         ]),
       ).rejects.toThrow(NotFoundException);
     });
+
+    it('should throw BadRequestException if costume is not active', async () => {
+      mockVariantRepo.findOne.mockResolvedValue({
+        id: 'var-inactive',
+        size: 'M',
+        costumeId: 'cos-inactive',
+        costume: {
+          id: 'cos-inactive',
+          name: 'Inactive Costume',
+          dailyPrice: 150000,
+          depositAmount: 500000,
+          isActive: false,
+        },
+      });
+
+      await expect(
+        service.calculateQuote('2026-11-10', '2026-11-12', [
+          { costumeVariantId: 'var-inactive', quantity: 1 },
+        ]),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException when items array is empty', async () => {
+      await expect(
+        service.calculateQuote('2026-11-10', '2026-11-12', []),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException when quantity is less than or equal to 0', async () => {
+      await expect(
+        service.calculateQuote('2026-11-10', '2026-11-12', [
+          { costumeVariantId: 'var-1', quantity: 0 },
+        ]),
+      ).rejects.toThrow(BadRequestException);
+    });
   });
 });
-

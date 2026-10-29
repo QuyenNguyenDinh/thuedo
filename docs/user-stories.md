@@ -370,28 +370,30 @@ Hệ thống có hai vai trò chính:
 
 ---
 
-## 3. Ma trận Truy xuất Nguồn gốc (Traceability Matrix: US -> API -> Màn hình -> Test)
+## 3. Ma trận Truy xuất Nguồn gốc (Traceability Matrix: US -> API -> Màn hình -> Test File Thực tế)
 
-| Mã US | Tóm tắt Chức năng | Vai trò | API Endpoint | Giao diện Màn hình | Test File |
+| Mã US | Tóm tắt Chức năng | Vai trò | API Endpoint Thực tế | Giao diện Màn hình | Test File Thực tế đã Passed |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **US01** | Đăng ký tài khoản | Guest | `POST /api/v1/auth/register` | `/register` | `auth.service.spec.ts`, `auth.e2e-spec.ts` |
-| **US02** | Đăng nhập tài khoản | All | `POST /api/v1/auth/login` | `/login` | `auth.service.spec.ts`, `auth.e2e-spec.ts` |
-| **US03** | Đăng xuất an toàn | Cust/Admin | `POST /api/v1/auth/logout` | Header navbar | `auth.service.spec.ts`, `auth.e2e-spec.ts` |
-| **US04** | Xem & sửa hồ sơ | Cust/Admin | `GET/PUT /api/v1/users/me` | `/profile` | `users.service.spec.ts`, `users.e2e-spec.ts` |
-| **US05** | Xem danh sách trang phục | All | `GET /api/v1/costumes` | `/costumes` | `costumes.service.spec.ts`, `costumes.e2e-spec.ts` |
-| **US06** | Tìm kiếm & lọc trang phục | All | `GET /api/v1/costumes?q=...` | `/costumes` (Sidebar) | `costumes.service.spec.ts` |
-| **US07** | Xem chi tiết trang phục | All | `GET /api/v1/costumes/:id` | `/costumes/:id` | `costumes.service.spec.ts`, `costumes.e2e-spec.ts` |
-| **US08** | Kiểm tra tồn kho theo ngày | All | `GET /api/v1/costumes/:id/availability`| `/costumes/:id` | `availability.service.spec.ts`, `availability.e2e-spec.ts`|
-| **US09** | Tính giá thuê và tiền cọc | All | `POST /api/v1/rental-quotes` | `/costumes/:id`, `/checkout` | `pricing.service.spec.ts` |
-| **US10** | Tạo đơn thuê (khóa tồn kho)| Customer | `POST /api/v1/rentals` | `/checkout` | `rentals.service.spec.ts`, `concurrency.e2e-spec.ts` |
-| **US11** | Xem lịch sử & chi tiết đơn | Customer | `GET /api/v1/rentals[/:id]` | `/my-rentals`, `/my-rentals/:id` | `rentals.service.spec.ts`, `idor-security.e2e-spec.ts` |
-| **US12** | Hủy đơn chờ xác nhận | Customer | `POST /api/v1/rentals/:id/cancel` | `/my-rentals/:id` | `rentals.service.spec.ts`, `rentals.e2e-spec.ts` |
-| **US13** | Quản lý danh mục | Admin | `GET/POST/PUT/DEL /api/v1/admin/categories` | `/admin/categories` | `categories.service.spec.ts`, `rbac.e2e-spec.ts` |
-| **US14** | Thêm/sửa/ẩn trang phục | Admin | `POST/PUT/PATCH /api/v1/admin/costumes` | `/admin/costumes` | `costumes.service.spec.ts`, `admin-costumes.e2e-spec.ts` |
-| **US15** | Quản lý kích cỡ & tồn kho | Admin | `POST/PUT/PATCH /api/v1/admin/variants` | `/admin/inventory` | `variants.service.spec.ts`, `inventory-safety.e2e-spec.ts` |
-| **US16** | Xác nhận / Từ chối đơn | Admin | `POST /api/v1/admin/rentals/:id/confirm|reject`| `/admin/rentals` | `admin-rentals.service.spec.ts`, `rental-state-machine.spec.ts` |
-| **US17** | Giao đồ tại cửa hàng | Admin | `POST /api/v1/admin/rentals/:id/deliver`| `/admin/rentals/:id` | `admin-rentals.service.spec.ts` |
-| **US18** | Nhận trả đồ & hoàn cọc | Admin | `POST /api/v1/admin/rentals/:id/return` | `/admin/rentals/:id` | `admin-rentals.service.spec.ts` |
-| **US19** | Thống kê Dashboard | Admin | `GET /api/v1/admin/dashboard` | `/admin/dashboard` | `admin-dashboard.service.spec.ts` |
-| **US20** | Xem lịch sử trạng thái | Admin/Cust | Tích hợp trong `GET /api/v1/rentals/:id` | Chi tiết đơn hàng | `rental-history.service.spec.ts` |
+| **US01** | Đăng ký tài khoản (bcrypt, chống trùng) | Guest | `POST /api/v1/auth/register` | `/register` | `test/user-stories.e2e-spec.ts (US01)` |
+| **US02** | Đăng nhập tài khoản (JWT, Throttler) | All | `POST /api/v1/auth/login` | `/login` | `test/user-stories.e2e-spec.ts (US02)`, `LoginPage.test.tsx` |
+| **US03** | Đăng xuất an toàn (thu hồi refresh session) | Cust/Admin | `POST /api/v1/auth/logout` | Header navbar | `test/user-stories.e2e-spec.ts (US03)` |
+| **US04** | Xem & sửa hồ sơ (chống leo quyền, regex SĐT) | Cust/Admin | `GET/PUT /api/v1/users/me` | `/profile` | `test/user-stories.e2e-spec.ts (US04)` |
+| **US05** | Xem danh sách trang phục đang hoạt động | All | `GET /api/v1/costumes` | `/costumes` | `test/user-stories.e2e-spec.ts (US05)`, `CostumeCard.test.tsx` |
+| **US06** | Tìm kiếm & lọc (keyword, category, size, price) | All | `GET /api/v1/costumes` | `/costumes` (Sidebar) | `test/user-stories.e2e-spec.ts (US06)` |
+| **US07** | Xem chi tiết trang phục, ảnh, mô tả, size | All | `GET /api/v1/costumes/:id` | `/costumes/:id` | `test/user-stories.e2e-spec.ts (US07)`, `e2e/user-flow.spec.ts` |
+| **US08** | Kiểm tra lịch còn hàng theo ngày (min tồn kho) | All | `GET /api/v1/costumes/:id/availability`| `/costumes/:id` | `test/unit/availability.service.spec.ts`, `test/user-stories.e2e-spec.ts (US08)` |
+| **US09** | Bảng tính tiền thuê và tiền cọc tách bạch | All | `POST /api/v1/rental-quotes` | `/costumes/:id`, `/checkout` | `test/unit/pricing.service.spec.ts`, `test/user-stories.e2e-spec.ts (US09)` |
+| **US10** | Tạo đơn thuê (khóa bi quan, snapshot giá) | Customer | `POST /api/v1/rentals` | `/checkout` | `test/concurrency.e2e-spec.ts`, `test/user-stories.e2e-spec.ts (US10)` |
+| **US11** | Xem lịch sử đơn thuê & phân trang | Customer | `GET /api/v1/rentals/my-rentals` | `/my-rentals`, `/my-rentals/:id` | `test/user-stories.e2e-spec.ts (US11)`, `StatusBadge.test.tsx` |
+| **US12** | Hủy đơn chờ xác nhận & giải phóng lịch | Customer | `POST /api/v1/rentals/:id/cancel` | `/my-rentals/:id` | `test/unit/rental-state-machine.spec.ts`, `test/user-stories.e2e-spec.ts (US12)` |
+| **US13** | Quản lý danh mục (thêm, sửa, đếm trang phục) | Admin | `GET/POST/PUT/DEL /api/v1/admin/categories` | `/admin/categories` | `test/user-stories.e2e-spec.ts (US13)` |
+| **US14** | Thêm, sửa, ẩn trang phục (chặn name=null) | Admin | `POST/PUT /api/v1/admin/costumes`, `PATCH .../toggle-active` | `/admin/costumes` | `test/user-stories.e2e-spec.ts (US14)` |
+| **US15** | Quản lý kích cỡ (+ Size) & an toàn tồn kho | Admin | `POST /api/v1/admin/variants`, `PATCH .../stock` | `/admin/costumes` (Modal Stock) | `test/unit/availability.service.spec.ts`, `test/user-stories.e2e-spec.ts (US15)` |
+| **US16** | Duyệt đơn (CONFIRMED) hoặc Từ chối (REJECTED) | Admin | `POST /api/v1/admin/rentals/:id/confirm|reject`| `/admin/rentals` | `test/unit/rental-state-machine.spec.ts`, `test/user-stories.e2e-spec.ts (US16)` |
+| **US17** | Ghi nhận bàn giao đồ tại cửa hàng (RENTING) | Admin | `POST /api/v1/admin/rentals/:id/deliver`| `/admin/rentals` (Modal Giao đồ) | `test/unit/rental-state-machine.spec.ts`, `test/user-stories.e2e-spec.ts (US17)` |
+| **US18** | Nhận trả đồ & quyết toán cọc/phạt (RETURNED) | Admin | `POST /api/v1/admin/rentals/:id/return` | `/admin/rentals` (Modal Trả đồ) | `test/unit/rental-state-machine.spec.ts`, `test/user-stories.e2e-spec.ts (US18)` |
+| **US19** | Thống kê Dashboard (doanh thu tách bạch cọc) | Admin | `GET /api/v1/admin/dashboard` | `/admin/dashboard` | `test/user-stories.e2e-spec.ts (US19)` |
+| **US20** | Xem lịch sử thay đổi trạng thái (bất biến) | Admin/Cust | Tích hợp trong `GET /api/v1/rentals/:id` | Tab "Lịch sử xử lý đơn" | `test/user-stories.e2e-spec.ts (US20)` |
+| **SEC01** | Bảo vệ RBAC (RolesGuard chặn Customer) | System | Toàn bộ các route `/api/v1/admin/*` | Giao diện Admin | `test/auth-rbac.e2e-spec.ts`, `test/user-stories.e2e-spec.ts (SEC01)` |
+| **SEC02** | Bảo vệ IDOR (Chặn xem/hủy đơn của người khác) | System | `GET /api/v1/rentals/:id`, `POST .../cancel` | Giao diện Đơn hàng | `test/auth-rbac.e2e-spec.ts`, `test/user-stories.e2e-spec.ts (SEC02)` |
 

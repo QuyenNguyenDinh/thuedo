@@ -24,9 +24,9 @@ test.describe('CosRent End-to-End User Journeys', () => {
 
     // Verify detail page elements
     await expect(page).toHaveURL(/\/costumes\/[a-zA-Z0-9-]+/);
-    await expect(page.locator('text=Giá thuê / ngày:')).toBeVisible();
-    await expect(page.locator('text=Tiền cọc quy định:')).toBeVisible();
-    await expect(page.locator('text=Chọn kích cỡ (Size):')).toBeVisible();
+    await expect(page.getByText('Giá thuê niêm yết', { exact: true })).toBeVisible();
+    await expect(page.getByText('Tiền cọc quy định', { exact: true })).toBeVisible();
+    await expect(page.getByText('1. Chọn kích cỡ trang phục', { exact: true })).toBeVisible();
   });
 
   test('Customer Authentication & Navigation Flow', async ({ page }) => {
@@ -39,8 +39,8 @@ test.describe('CosRent End-to-End User Journeys', () => {
     await page.fill('#password', 'Customer123@');
     await page.click('button[type="submit"]');
 
-    // 3. Authenticated customer must see user menu and rental history links
-    await expect(page.locator('#dropdown-user, text=Đơn thuê của tôi')).toBeVisible({ timeout: 10000 });
+    // 3. Authenticated customer must see user dropdown
+    await expect(page.locator('#dropdown-user')).toBeVisible({ timeout: 10000 });
 
     // 4. Navigate to My Rentals
     await page.goto('/my-rentals');
@@ -55,7 +55,7 @@ test.describe('CosRent End-to-End User Journeys', () => {
     await page.click('button[type="submit"]');
 
     // 2. Wait for admin credentials to load
-    await expect(page.locator('#dropdown-user, text=Dashboard')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('#dropdown-user')).toBeVisible({ timeout: 10000 });
 
     // 3. Direct navigate to admin dashboard
     await page.goto('/admin/dashboard');
@@ -68,6 +68,6 @@ test.describe('CosRent End-to-End User Journeys', () => {
 
     // 5. Admin navigates to Rental Orders Management
     await page.goto('/admin/rentals');
-    await expect(page.locator('h3')).toContainText('Quản Lý Đơn Thuê Trang Phục');
+    await expect(page.getByRole('heading', { level: 3, name: 'Quản Lý & Xử Lý Đơn Thuê' })).toBeVisible();
   });
 });

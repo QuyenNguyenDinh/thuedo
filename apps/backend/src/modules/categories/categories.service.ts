@@ -75,8 +75,15 @@ export class CategoriesService {
   async update(id: string, dto: UpdateCategoryDto): Promise<Category> {
     const category = await this.findById(id);
 
-    if (dto.name !== undefined) category.name = dto.name.trim();
-    if (dto.description !== undefined) category.description = dto.description.trim();
+    if (dto.name !== undefined) {
+      if (!dto.name || typeof dto.name !== 'string' || !dto.name.trim()) {
+        throw new BadRequestException('Tên danh mục không được để trống.');
+      }
+      category.name = dto.name.trim();
+    }
+    if (dto.description !== undefined) {
+      category.description = dto.description ? String(dto.description).trim() : '';
+    }
     if (dto.displayOrder !== undefined) category.displayOrder = dto.displayOrder;
     if (dto.isActive !== undefined) category.isActive = dto.isActive;
 

@@ -1,12 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { AvailabilityService } from './availability.service';
-import { CostumeVariant } from '../../entities/costume-variant.entity';
-import { RentalOrder } from '../../entities/rental-order.entity';
-import { RentalOrderItem } from '../../entities/rental-order-item.entity';
-import { OrderStatus } from '../../common/enums/order-status.enum';
+import { AvailabilityService } from '../../src/modules/availability/availability.service';
+import { CostumeVariant } from '../../src/entities/costume-variant.entity';
+import { RentalOrder } from '../../src/entities/rental-order.entity';
+import { RentalOrderItem } from '../../src/entities/rental-order-item.entity';
+import { OrderStatus } from '../../src/common/enums/order-status.enum';
 
-describe('AvailabilityService', () => {
+describe('AvailabilityService (Unit Test)', () => {
   let service: AvailabilityService;
   let mockVariantRepo: any;
   let mockOrderRepo: any;
@@ -240,4 +240,3 @@ describe('AvailabilityService', () => {
     });
   });
 });
-

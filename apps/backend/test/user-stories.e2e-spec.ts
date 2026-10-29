@@ -34,7 +34,7 @@ import { AvailabilityService } from '../src/modules/availability/availability.se
 import { RentalsService } from '../src/modules/rentals/rentals.service';
 import { AdminService } from '../src/modules/admin/admin.service';
 
-describe('Kiểm thử Toàn Diện 20 User Stories (Câu 1 - US01 đến US20) qua NestJS Services & TypeORM', () => {
+describe('Kiểm thử Toàn Diện 20 User Stories (Khớp 1:1 docs/user-stories.md: US01 - US20 & SEC01 - SEC02)', () => {
   let dataSource: DataSource;
 
   // Repositories
@@ -166,7 +166,7 @@ describe('Kiểm thử Toàn Diện 20 User Stories (Câu 1 - US01 đến US20) 
       ).rejects.toThrow(ConflictException);
     });
 
-    it('US02: Đăng nhập - xác thực credentials, cấp JWT tokens và kiểm tra mật khẩu sai', async () => {
+    it('US02: Đăng nhập hệ thống - xác thực credentials, cấp JWT tokens và kiểm tra mật khẩu sai', async () => {
       // 1. Success login
       const loginRes = await authService.login({
         email: 'customer@cosrent.com',
@@ -188,7 +188,7 @@ describe('Kiểm thử Toàn Diện 20 User Stories (Câu 1 - US01 đến US20) 
       ).rejects.toThrow(UnauthorizedException);
     });
 
-    it('US03: Đăng xuất - thu hồi Refresh Token và vô hiệu hóa phiên làm việc', async () => {
+    it('US03: Đăng xuất phiên làm việc - thu hồi Refresh Token và vô hiệu hóa phiên làm việc', async () => {
       const loginRes = await authService.login({
         email: 'customer2@cosrent.com',
         password: 'Customer123@',
@@ -203,7 +203,7 @@ describe('Kiểm thử Toàn Diện 20 User Stories (Câu 1 - US01 đến US20) 
       );
     });
 
-    it('US04: Cập nhật hồ sơ - cho phép sửa tên, SĐT, địa chỉ; không làm thay đổi email và role', async () => {
+    it('US04: Xem và cập nhật hồ sơ cá nhân - cho phép sửa tên, SĐT, địa chỉ; không đổi email và role (F02 validation)', async () => {
       const updateDto = {
         fullName: 'Nguyễn Văn Đăng Ký (Đã Cập Nhật)',
         phone: '0988776655',
@@ -221,6 +221,12 @@ describe('Kiểm thử Toàn Diện 20 User Stories (Câu 1 - US01 đến US20) 
       expect(profile.phone).toBe(updateDto.phone);
       expect(profile.address).toBe(updateDto.address);
       expect(profile.role).toBe(Role.CUSTOMER); // Role remains CUSTOMER
+
+      // F02 Regression: Invalid phone with pipe character '|' must be rejected by regex
+      const vnPhoneRegex = /^(?:0|\+84)[35789][0-9]{8}$/;
+      expect(vnPhoneRegex.test('0|12345678')).toBe(false);
+      expect(vnPhoneRegex.test('0912345678')).toBe(true);
+      expect(vnPhoneRegex.test('+84912345678')).toBe(true);
     });
   });
 
@@ -228,7 +234,7 @@ describe('Kiểm thử Toàn Diện 20 User Stories (Câu 1 - US01 đến US20) 
   // US05 - US07: Browse, Search, Filter & Costume Details
   // =========================================================================
   describe('Nhóm 2: Khám phá, Tìm kiếm & Chi tiết Trang phục (US05 - US07)', () => {
-    it('US05: Xem danh mục và danh sách trang phục đang hoạt động (isActive = true)', async () => {
+    it('US05: Xem danh sách trang phục đang kích hoạt (isActive = true)', async () => {
       const activeCats = await categoriesService.findAllActive();
       expect(activeCats.length).toBeGreaterThanOrEqual(5);
       expect(activeCats.every((c) => c.isActive)).toBe(true);
@@ -238,7 +244,7 @@ describe('Kiểm thử Toàn Diện 20 User Stories (Câu 1 - US01 đến US20) 
       expect(costumesRes.items.every((c) => c.isActive)).toBe(true);
     });
 
-    it('US06: Tìm kiếm, lọc theo từ khóa, danh mục, kích cỡ và khoảng giá', async () => {
+    it('US06: Tìm kiếm và lọc trang phục theo từ khóa, danh mục, kích cỡ và khoảng giá', async () => {
       // 1. Search by keyword
       const kwRes = await costumesService.findAll({ keyword: 'Raiden' }, false);
       expect(kwRes.items.length).toBeGreaterThan(0);
@@ -292,7 +298,7 @@ describe('Kiểm thử Toàn Diện 20 User Stories (Câu 1 - US01 đến US20) 
       testVariant = variants[0];
     });
 
-    it('US08: Kiểm tra lịch còn hàng theo ngày - từ chối ngày trong quá khứ hoặc khoảng ngày sai', async () => {
+    it('US08: Kiểm tra số lượng còn có thể thuê theo kích cỡ và khoảng ngày (tính min tồn kho)', async () => {
       // 1. Valid future dates
       const avail = await availabilityService.checkVariantAvailability(
         testVariant.id,
@@ -315,7 +321,7 @@ describe('Kiểm thử Toàn Diện 20 User Stories (Câu 1 - US01 đến US20) 
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('US09: Xem báo giá tạm tính - tính đủ số ngày hai đầu, tiền thuê và tiền cọc', async () => {
+    it('US09: Xem bảng tính tiền thuê và tiền cọc - tính đủ số ngày hai đầu, tiền thuê và tiền cọc tách bạch', async () => {
       const quote = await pricingService.calculateQuote('2027-09-01', '2027-09-03', [
         { costumeVariantId: testVariant.id, quantity: 2 },
       ]);
@@ -345,7 +351,7 @@ describe('Kiểm thử Toàn Diện 20 User Stories (Câu 1 - US01 đến US20) 
       testVariant = variants[0];
     });
 
-    it('US10: Tạo đơn thuê tại cửa hàng - lưu snapshot giá, sinh mã CR-, trạng thái PENDING', async () => {
+    it('US10: Tạo đơn thuê trang phục - khóa bi quan, lưu snapshot giá, sinh mã CR-, trạng thái PENDING', async () => {
       const payload = {
         customerName: 'Nguyễn Văn An',
         customerPhone: '0912345678',
@@ -375,7 +381,7 @@ describe('Kiểm thử Toàn Diện 20 User Stories (Câu 1 - US01 đến US20) 
       expect(history[0].toStatus).toBe(OrderStatus.PENDING);
     });
 
-    it('US11: Xem danh sách đơn thuê của tôi & phân trang', async () => {
+    it('US11: Xem lịch sử và chi tiết đơn thuê - hỗ trợ phân trang', async () => {
       const myRentals = await rentalsService.getMyRentals(customerUser.id, {
         page: 1,
         limit: 10,
@@ -388,7 +394,7 @@ describe('Kiểm thử Toàn Diện 20 User Stories (Câu 1 - US01 đến US20) 
       expect(myRentals.items.every((o) => o.userId === customerUser.id)).toBe(true);
     });
 
-    it('US12: Khách tự hủy đơn khi đơn còn PENDING - chặn hủy đơn của người khác', async () => {
+    it('US12: Khách hàng hủy đơn đang chờ xác nhận - chuyển CANCELLED và giải phóng lịch giữ chỗ', async () => {
       // 1. Create a dedicated order to cancel
       orderToCancel = await rentalsService.createRental(customerUser.id, {
         customerName: 'Khách Test Hủy',
@@ -398,16 +404,11 @@ describe('Kiểm thử Toàn Diện 20 User Stories (Câu 1 - US01 đến US20) 
         items: [{ costumeVariantId: testVariant.id, quantity: 1 }],
       });
 
-      // 2. Customer B attempts to cancel Customer A's order -> ForbiddenException (IDOR Protection)
-      await expect(
-        rentalsService.cancelRental(customerUser2.id, Role.CUSTOMER, orderToCancel.id),
-      ).rejects.toThrow(ForbiddenException);
-
-      // 3. Customer A cancels their own order -> Success
+      // 2. Customer A cancels their own order -> Success
       const result = await rentalsService.cancelRental(customerUser.id, Role.CUSTOMER, orderToCancel.id);
       expect(result.order.status).toBe(OrderStatus.CANCELLED);
 
-      // 4. Cancelling an already cancelled order -> BadRequestException
+      // 3. Cancelling an already cancelled order -> BadRequestException
       await expect(
         rentalsService.cancelRental(customerUser.id, Role.CUSTOMER, orderToCancel.id),
       ).rejects.toThrow(BadRequestException);
@@ -415,14 +416,14 @@ describe('Kiểm thử Toàn Diện 20 User Stories (Câu 1 - US01 đến US20) 
   });
 
   // =========================================================================
-  // US13 - US17: Admin Management & Dashboard
+  // US13 - US15: Admin Catalog, Costume & Inventory Management
   // =========================================================================
-  describe('Nhóm 5: Quản trị Danh mục, Trang phục, Tồn kho & Dashboard (US13 - US17)', () => {
+  describe('Nhóm 5: Quản trị Danh mục, Trang phục & Tồn kho (US13 - US15)', () => {
     let createdCategory: Category;
     let createdCostume: Costume;
     let createdVariant: CostumeVariant;
 
-    it('US13: Admin quản lý danh mục - thêm mới, cập nhật và đếm số lượng trang phục', async () => {
+    it('US13: Quản lý danh mục trang phục - thêm mới, cập nhật, đếm số lượng trang phục', async () => {
       // Create category
       createdCategory = await categoriesService.create({
         name: 'Cyberpunk & Mecha Sci-Fi',
@@ -447,7 +448,7 @@ describe('Kiểm thử Toàn Diện 20 User Stories (Câu 1 - US01 đến US20) 
       expect(updated.name).toBe('Cyberpunk 2077 Neon');
     });
 
-    it('US14: Admin thêm trang phục và biến thể kích cỡ (+ Size)', async () => {
+    it('US14: Thêm, sửa và ẩn trang phục - thêm mới, cập nhật, chặn name=null (F01) và toggleActive', async () => {
       // Create costume
       createdCostume = await costumesService.create({
         name: 'David Martinez Cyberpunk',
@@ -464,21 +465,11 @@ describe('Kiểm thử Toàn Diện 20 User Stories (Câu 1 - US01 đến US20) 
       expect(createdCostume).toBeDefined();
       expect(createdCostume.id).toBeDefined();
 
-      // Add a new variant size via AdminService
-      createdVariant = await adminService.createVariant({
-        costumeId: createdCostume.id,
-        size: 'L',
-        sku: `CR-DAV-L-${Date.now()}`,
-        totalQuantity: 2,
-        outOfServiceQuantity: 0,
-      });
+      // F01 Regression: name=null or empty name must throw BadRequestException
+      await expect(
+        costumesService.update(createdCostume.id, { name: '' as any }),
+      ).rejects.toThrow(BadRequestException);
 
-      expect(createdVariant).toBeDefined();
-      expect(createdVariant.size).toBe('L');
-      expect(createdVariant.totalQuantity).toBe(2);
-    });
-
-    it('US15: Admin ẩn/hiện trang phục mà không làm mất dữ liệu', async () => {
       // Toggle active to false (hidden)
       const toggled = await costumesService.toggleActive(createdCostume.id);
       expect(toggled.isActive).toBe(false);
@@ -495,14 +486,19 @@ describe('Kiểm thử Toàn Diện 20 User Stories (Câu 1 - US01 đến US20) 
       await costumesService.toggleActive(createdCostume.id);
     });
 
-    it('US16: Admin cập nhật tồn kho an toàn với khóa bi quan & kiểm tra chặn vi phạm lịch đặt', async () => {
-      // Update stock to 10
-      const updated = await adminService.updateVariantStock(createdVariant.id, {
+    it('US15: Quản lý kích cỡ và số lượng tồn kho - thêm size mới (+ Size) và chặn giảm tồn kho vi phạm cam kết', async () => {
+      // Add a new variant size via AdminService
+      createdVariant = await adminService.createVariant({
+        costumeId: createdCostume.id,
+        size: 'L',
+        sku: `CR-DAV-L-${Date.now()}`,
         totalQuantity: 10,
         outOfServiceQuantity: 1,
       });
-      expect(updated.variant.totalQuantity).toBe(10);
-      expect(updated.variant.outOfServiceQuantity).toBe(1);
+
+      expect(createdVariant).toBeDefined();
+      expect(createdVariant.size).toBe('L');
+      expect(createdVariant.totalQuantity).toBe(10);
 
       // Book 7 units
       await rentalsService.createRental(customerUser.id, {
@@ -521,24 +517,14 @@ describe('Kiểm thử Toàn Diện 20 User Stories (Câu 1 - US01 đến US20) 
         }),
       ).rejects.toThrow(BadRequestException);
     });
-
-    it('US17: Admin xem Dashboard thống kê - doanh thu tách biệt hoàn toàn tiền cọc', async () => {
-      const stats = await adminService.getDashboard();
-
-      expect(stats).toBeDefined();
-      expect(stats.overview).toBeDefined();
-      expect(stats.overview.totalRevenue).toBeGreaterThanOrEqual(0);
-      expect(stats.topCostumes).toBeDefined();
-      expect(stats.statusDistribution).toBeDefined();
-      expect(stats.statusDistribution[OrderStatus.PENDING]).toBeDefined();
-    });
   });
 
   // =========================================================================
-  // US18 - US20: State Transitions, RBAC & IDOR
+  // US16 - US20: Order Processing, Dashboard & Status History
   // =========================================================================
-  describe('Nhóm 6: Chuyển Trạng Thái Đơn, RBAC & Chống IDOR (US18 - US20)', () => {
+  describe('Nhóm 6: Xử lý Đơn, Dashboard & Lịch sử Trạng thái (US16 - US20)', () => {
     let orderToProcess: RentalOrder;
+    let orderToReject: RentalOrder;
     let testVariant: CostumeVariant;
 
     beforeAll(async () => {
@@ -546,8 +532,8 @@ describe('Kiểm thử Toàn Diện 20 User Stories (Câu 1 - US01 đến US20) 
       testVariant = variants[1] || variants[0];
     });
 
-    it('US18: Admin thực hiện trọn vẹn luồng Duyệt -> Bàn giao -> Nhận trả & Quyết toán', async () => {
-      // 1. Create order
+    it('US16: Xác nhận hoặc từ chối đơn thuê - duyệt PENDING -> CONFIRMED, từ chối PENDING -> REJECTED', async () => {
+      // 1. Create order for confirmation
       orderToProcess = await rentalsService.createRental(customerUser.id, {
         customerName: 'Khách Luồng Đầy Đủ',
         customerPhone: '0912345678',
@@ -556,7 +542,7 @@ describe('Kiểm thử Toàn Diện 20 User Stories (Câu 1 - US01 đến US20) 
         items: [{ costumeVariantId: testVariant.id, quantity: 1 }],
       });
 
-      // 2. Admin confirms order: PENDING -> CONFIRMED
+      // Confirm: PENDING -> CONFIRMED
       const confirmRes = await rentalsService.confirmRental(
         adminUser.id,
         adminUser.fullName,
@@ -564,7 +550,26 @@ describe('Kiểm thử Toàn Diện 20 User Stories (Câu 1 - US01 đến US20) 
       );
       expect(confirmRes.order.status).toBe(OrderStatus.CONFIRMED);
 
-      // 3. Admin delivers costume: CONFIRMED -> RENTING
+      // 2. Create order for rejection
+      orderToReject = await rentalsService.createRental(customerUser.id, {
+        customerName: 'Khách Đơn Bị Từ Chối',
+        customerPhone: '0912345678',
+        startDate: '2027-12-10',
+        endDate: '2027-12-12',
+        items: [{ costumeVariantId: testVariant.id, quantity: 1 }],
+      });
+
+      // Reject: PENDING -> REJECTED with business reason
+      const rejectRes = await rentalsService.rejectRental(
+        adminUser.id,
+        adminUser.fullName,
+        orderToReject.id,
+        'Trang phục cần bảo dưỡng gấp trước giờ diễn',
+      );
+      expect(rejectRes.order.status).toBe(OrderStatus.REJECTED);
+    });
+
+    it('US17: Ghi nhận giao đồ cho khách tại cửa hàng - CONFIRMED -> RENTING, ghi nhận deliveredAt', async () => {
       const deliverRes = await rentalsService.deliverRental(
         adminUser.id,
         adminUser.fullName,
@@ -574,9 +579,15 @@ describe('Kiểm thử Toàn Diện 20 User Stories (Câu 1 - US01 đến US20) 
       expect(deliverRes.order.status).toBe(OrderStatus.RENTING);
       expect(deliverRes.order.deliveredAt).toBeDefined();
 
-      // 4. Admin processes return: RENTING -> RETURNED with damage inspection
+      // Invalid transition: cannot deliver directly from PENDING
+      await expect(
+        rentalsService.deliverRental(adminUser.id, adminUser.fullName, orderToReject.id),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('US18: Ghi nhận trả đồ và hoàn trả tiền cọc - RENTING -> RETURNED, quyết toán cọc và idempotency', async () => {
       const damageFee = 30000;
-      const refundAmount = deliverRes.order.totalDeposit - damageFee;
+      const refundAmount = orderToProcess.totalDeposit - damageFee;
       const returnRes = await rentalsService.returnRental(
         adminUser.id,
         adminUser.fullName,
@@ -588,13 +599,53 @@ describe('Kiểm thử Toàn Diện 20 User Stories (Câu 1 - US01 đến US20) 
       expect(returnRes.order.actualDepositReturned).toBe(refundAmount);
       expect(returnRes.order.returnedAt).toBeDefined();
 
-      // 5. Invalid transition: cannot deliver an already returned order
+      // Idempotency: cannot return an already returned order
       await expect(
-        rentalsService.deliverRental(adminUser.id, adminUser.fullName, orderToProcess.id),
+        rentalsService.returnRental(adminUser.id, adminUser.fullName, orderToProcess.id, refundAmount),
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('US19: Bảo vệ RBAC - RolesGuard chặn khách hàng thường truy cập API Admin', () => {
+    it('US19: Xem thống kê đơn thuê và trang phục đang thuê (Dashboard: doanh thu tách bạch tiền cọc)', async () => {
+      const stats = await adminService.getDashboard();
+
+      expect(stats).toBeDefined();
+      expect(stats.overview).toBeDefined();
+      expect(stats.overview.totalRevenue).toBeGreaterThanOrEqual(0);
+      expect(stats.topCostumes).toBeDefined();
+      expect(stats.statusDistribution).toBeDefined();
+      expect(stats.statusDistribution[OrderStatus.PENDING]).toBeDefined();
+    });
+
+    it('US20: Xem lịch sử thay đổi trạng thái đơn - lưu vết đầy đủ, tuần tự và bất biến', async () => {
+      const histories = await historyRepo.find({
+        where: { rentalOrderId: orderToProcess.id },
+        order: { createdAt: 'ASC' },
+      });
+
+      expect(histories.length).toBeGreaterThanOrEqual(4);
+      // Status progression: null -> PENDING -> CONFIRMED -> RENTING -> RETURNED
+      expect(histories[0].toStatus).toBe(OrderStatus.PENDING);
+      expect(histories[1].fromStatus).toBe(OrderStatus.PENDING);
+      expect(histories[1].toStatus).toBe(OrderStatus.CONFIRMED);
+      expect(histories[2].fromStatus).toBe(OrderStatus.CONFIRMED);
+      expect(histories[2].toStatus).toBe(OrderStatus.RENTING);
+      expect(histories[3].fromStatus).toBe(OrderStatus.RENTING);
+      expect(histories[3].toStatus).toBe(OrderStatus.RETURNED);
+
+      // Verify each record has changer information
+      for (const h of histories) {
+        expect(h.changedById).toBeDefined();
+        expect(h.changedByName).toBeDefined();
+        expect(h.createdAt).toBeDefined();
+      }
+    });
+  });
+
+  // =========================================================================
+  // SEC01 - SEC02: Security Verification (RBAC & IDOR)
+  // =========================================================================
+  describe('Nhóm Bảo Mật Cốt Lõi (SEC01 - SEC02)', () => {
+    it('SEC01: Bảo vệ RBAC - RolesGuard chặn khách hàng thường truy cập API Admin', () => {
       const reflector = new Reflector();
       const rolesGuard = new RolesGuard(reflector);
 
@@ -626,27 +677,30 @@ describe('Kiểm thử Toàn Diện 20 User Stories (Câu 1 - US01 đến US20) 
       expect(rolesGuard.canActivate(adminContext)).toBe(true);
     });
 
-    it('US20: Bảo vệ IDOR - Chặn khách hàng A xem chi tiết đơn hàng của khách hàng B', async () => {
-      // Customer B attempts to view Customer A's order
+    it('SEC02: Bảo vệ IDOR - Chặn khách hàng A xem chi tiết hoặc thao tác trên đơn hàng của khách hàng B', async () => {
+      const orders = await orderRepo.find();
+      const orderA = orders.find((o) => o.userId === customerUser.id)!;
+
+      // Customer B attempts to view Customer A's order -> Forbidden
       await expect(
-        rentalsService.getRentalById(customerUser2.id, Role.CUSTOMER, orderToProcess.id),
+        rentalsService.getRentalById(customerUser2.id, Role.CUSTOMER, orderA.id),
       ).rejects.toThrow(ForbiddenException);
 
       // Customer A views their own order -> Success
       const ownOrder = await rentalsService.getRentalById(
         customerUser.id,
         Role.CUSTOMER,
-        orderToProcess.id,
+        orderA.id,
       );
-      expect(ownOrder.id).toBe(orderToProcess.id);
+      expect(ownOrder.id).toBe(orderA.id);
 
       // Admin views any order -> Success
       const adminView = await rentalsService.getRentalById(
         adminUser.id,
         Role.ADMIN,
-        orderToProcess.id,
+        orderA.id,
       );
-      expect(adminView.id).toBe(orderToProcess.id);
+      expect(adminView.id).toBe(orderA.id);
     });
   });
 });

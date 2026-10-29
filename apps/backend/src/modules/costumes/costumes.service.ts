@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
@@ -21,7 +22,7 @@ export class CostumesService {
     private imageRepository: Repository<CostumeImage>,
     @InjectRepository(CostumeVariant)
     private variantRepository: Repository<CostumeVariant>,
-  ) {}
+  ) { }
 
   async findAll(query: QueryCostumesDto, isAdmin = false) {
     const page = Math.max(1, query.page || 1);
@@ -210,10 +211,15 @@ export class CostumesService {
 
     await this.dataSource.transaction(async (manager) => {
       if (dto.categoryId !== undefined) costume.categoryId = dto.categoryId;
-      if (dto.name !== undefined) costume.name = dto.name.trim();
-      if (dto.characterName !== undefined) costume.characterName = dto.characterName?.trim() || null;
-      if (dto.seriesName !== undefined) costume.seriesName = dto.seriesName?.trim() || null;
-      if (dto.description !== undefined) costume.description = dto.description.trim();
+      if (dto.name !== undefined) {
+        if (!dto.name || typeof dto.name !== 'string' || !dto.name.trim()) {
+          throw new BadRequestException('Tên trang phục không được để trống.');
+        }
+        costume.name = dto.name.trim();
+      }
+      if (dto.characterName !== undefined) costume.characterName = dto.characterName ? String(dto.characterName).trim() : null;
+      if (dto.seriesName !== undefined) costume.seriesName = dto.seriesName ? String(dto.seriesName).trim() : null;
+      if (dto.description !== undefined) costume.description = dto.description ? String(dto.description).trim() : '';
       if (dto.dailyPrice !== undefined) costume.dailyPrice = dto.dailyPrice;
       if (dto.depositAmount !== undefined) costume.depositAmount = dto.depositAmount;
       if (dto.isActive !== undefined) costume.isActive = dto.isActive;

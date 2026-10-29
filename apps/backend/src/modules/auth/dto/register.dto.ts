@@ -32,7 +32,7 @@ export class RegisterDto {
 
   @ApiProperty({ example: '0912345678', description: 'Số điện thoại liên hệ' })
   @IsString()
-  @Matches(/^(0|\+84)[3|5|7|8|9][0-9]{8}$/, {
+  @Matches(/^(?:0|\+84)[35789][0-9]{8}$/, {
     message: 'Số điện thoại không đúng định dạng số di động Việt Nam.',
   })
   phone: string;

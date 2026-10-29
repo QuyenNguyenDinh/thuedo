@@ -23,6 +23,39 @@ import { AvailabilityService } from '../availability/availability.service';
 @Injectable()
 export class RentalsService {
   private readonly logger = new Logger(RentalsService.name);
+  private locks = new Map<string, Promise<void>>();
+
+  private async acquireLocks(keys: string[]): Promise<() => void> {
+    const sortedKeys = Array.from(new Set(keys)).sort();
+    const releaseFns: (() => void)[] = [];
+
+    for (const key of sortedKeys) {
+      let resolveLock: () => void;
+      const currentPromise = this.locks.get(key);
+      const newPromise = new Promise<void>((resolve) => {
+        resolveLock = resolve;
+      });
+
+      this.locks.set(key, newPromise);
+
+      if (currentPromise) {
+        await currentPromise;
+      }
+
+      releaseFns.push(() => {
+        if (this.locks.get(key) === newPromise) {
+          this.locks.delete(key);
+        }
+        resolveLock!();
+      });
+    }
+
+    return () => {
+      while (releaseFns.length > 0) {
+        releaseFns.pop()!();
+      }
+    };
+  }
 
   constructor(
     private dataSource: DataSource,
@@ -37,7 +70,7 @@ export class RentalsService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private availabilityService: AvailabilityService,
-  ) {}
+  ) { }
 
   private generateOrderCode(): string {
     const today = DateUtil.getTodayInVietnam().replace(/-/g, '');
@@ -79,14 +112,15 @@ export class RentalsService {
       throw new NotFoundException('Không tìm thấy tài khoản khách hàng.');
     }
 
+    // 1. Sort variant IDs ascending to prevent deadlock across concurrent checkout
+    const variantIds = Array.from(new Set(rawVariantIds)).sort();
+    const releaseLocks = await this.acquireLocks(variantIds);
+
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
-      // 1. Sort variant IDs ascending to prevent deadlock across concurrent checkout
-      const variantIds = Array.from(new Set(rawVariantIds)).sort();
-
       // 2. Lock variants with pessimistic write lock
       const lockedVariants = await queryRunner.manager
         .createQueryBuilder(CostumeVariant, 'variant')
@@ -203,6 +237,7 @@ export class RentalsService {
       throw err;
     } finally {
       await queryRunner.release();
+      releaseLocks();
     }
   }
 

@@ -9,8 +9,9 @@ import {
   ValidateNested,
   IsOptional,
   IsBoolean,
+  ValidateIf,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 
 export class CostumeImageDto {
   @ApiProperty({ example: 'https://images.unsplash.com/photo-1578632767115-351597cf2477' })
@@ -115,52 +116,57 @@ export class CreateCostumeDto {
 
 export class UpdateCostumeDto {
   @ApiPropertyOptional()
-  @IsUUID()
-  @IsOptional()
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsUUID('4', { message: 'Mã danh mục phải là UUID hợp lệ.' })
   categoryId?: string;
 
   @ApiPropertyOptional()
-  @IsString()
-  @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsString({ message: 'Tên trang phục phải là chuỗi.' })
+  @IsNotEmpty({ message: 'Tên trang phục không được để trống.' })
   name?: string;
 
   @ApiPropertyOptional()
-  @IsString()
-  @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsString({ message: 'Tên nhân vật phải là chuỗi.' })
   characterName?: string;
 
   @ApiPropertyOptional()
-  @IsString()
-  @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsString({ message: 'Tên series phải là chuỗi.' })
   seriesName?: string;
 
   @ApiPropertyOptional()
-  @IsString()
-  @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsString({ message: 'Mô tả phải là chuỗi.' })
   description?: string;
 
   @ApiPropertyOptional()
-  @IsInt()
-  @Min(0)
-  @IsOptional()
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsInt({ message: 'Giá thuê theo ngày phải là số nguyên.' })
+  @Min(0, { message: 'Giá thuê theo ngày không được âm.' })
   dailyPrice?: number;
 
   @ApiPropertyOptional()
-  @IsInt()
-  @Min(0)
-  @IsOptional()
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsInt({ message: 'Tiền đặt cọc phải là số nguyên.' })
+  @Min(0, { message: 'Tiền đặt cọc không được âm.' })
   depositAmount?: number;
 
   @ApiPropertyOptional()
-  @IsBoolean()
-  @IsOptional()
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsBoolean({ message: 'Trạng thái hoạt động phải là boolean.' })
   isActive?: boolean;
 
   @ApiPropertyOptional({ type: [CostumeImageDto] })
-  @IsArray()
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsArray({ message: 'Danh sách hình ảnh phải là mảng.' })
   @ValidateNested({ each: true })
   @Type(() => CostumeImageDto)
-  @IsOptional()
   images?: CostumeImageDto[];
 }
 

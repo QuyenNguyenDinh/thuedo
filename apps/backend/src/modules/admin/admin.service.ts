@@ -106,6 +106,11 @@ export class AdminService {
       .getRawMany();
 
     return {
+      totalRevenue,
+      activeRentingItems,
+      pendingCount: statusCounts[OrderStatus.PENDING],
+      overdueCount: overdueOrders.length,
+      statusCounts,
       overview: {
         totalRevenue,
         activeRentingItems,

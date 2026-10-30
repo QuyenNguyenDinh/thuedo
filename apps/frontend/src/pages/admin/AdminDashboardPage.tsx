@@ -73,8 +73,17 @@ export const AdminDashboardPage: React.FC = () => {
             <p className="text-muted mt-2">Đang tải số liệu thống kê...</p>
           </div>
         ) : (
-          <>
-            {/* KPI Cards Row */}
+          (() => {
+            const overview = data?.overview || data || {};
+            const statusCounts = data?.statusDistribution || data?.statusCounts || {};
+            const totalRevenue = Number(overview.totalRevenue ?? data?.totalRevenue ?? 0);
+            const pendingCount = Number(overview.pendingOrdersCount ?? data?.pendingCount ?? 0);
+            const activeRentingItems = Number(overview.activeRentingItems ?? data?.activeRentingItems ?? 0);
+            const overdueCount = Number(overview.overdueOrdersCount ?? data?.overdueCount ?? 0);
+
+            return (
+              <>
+                {/* KPI Cards Row */}
             <Row className="g-3 mb-4">
               <Col lg={3} sm={6}>
                 <Card className="border-0 shadow-sm p-3 bg-white rounded h-100 border-start border-primary border-4">
@@ -82,7 +91,7 @@ export const AdminDashboardPage: React.FC = () => {
                     <div>
                       <small className="text-muted fw-semibold">TỔNG DOANH THU THUÊ</small>
                       <h4 className="fw-extrabold text-primary mb-0 mt-1">
-                        {(data?.totalRevenue || 0).toLocaleString('vi-VN')} ₫
+                        {totalRevenue.toLocaleString('vi-VN')} ₫
                       </h4>
                       <small className="text-muted" style={{ fontSize: '0.75rem' }}>
                         (Không tính tiền cọc hoàn lại)
@@ -99,7 +108,7 @@ export const AdminDashboardPage: React.FC = () => {
                     <div>
                       <small className="text-muted fw-semibold">ĐƠN CHỜ XÁC NHẬN</small>
                       <h4 className="fw-extrabold text-warning mb-0 mt-1">
-                        {data?.pendingCount || 0} đơn
+                        {pendingCount} đơn
                       </h4>
                       <small className="text-muted" style={{ fontSize: '0.75rem' }}>
                         Cần duyệt trước khi khách tới
@@ -116,7 +125,7 @@ export const AdminDashboardPage: React.FC = () => {
                     <div>
                       <small className="text-muted fw-semibold">ĐỒ ĐANG NGOÀI CỬA HÀNG</small>
                       <h4 className="fw-extrabold text-info mb-0 mt-1">
-                        {data?.activeRentingItems || 0} bộ
+                        {activeRentingItems} bộ
                       </h4>
                       <small className="text-muted" style={{ fontSize: '0.75rem' }}>
                         Khách đang giữ (Status: RENTING)
@@ -133,7 +142,7 @@ export const AdminDashboardPage: React.FC = () => {
                     <div>
                       <small className="text-muted fw-semibold">CẢNH BÁO QUÁ HẠN</small>
                       <h4 className="fw-extrabold text-danger mb-0 mt-1">
-                        {data?.overdueCount || 0} đơn
+                        {overdueCount} đơn
                       </h4>
                       <small className="text-muted" style={{ fontSize: '0.75rem' }}>
                         Chưa trả đồ sau ngày hẹn
@@ -231,25 +240,27 @@ export const AdminDashboardPage: React.FC = () => {
                   <h6 className="fw-bold mb-2 small text-muted text-uppercase">Phân bổ trạng thái đơn</h6>
                   <div className="d-flex flex-wrap gap-2 small">
                     <span className="badge bg-warning text-dark p-2">
-                      Pending: {data?.statusCounts?.[OrderStatus.PENDING] || 0}
+                      Pending: {statusCounts[OrderStatus.PENDING] || 0}
                     </span>
                     <span className="badge bg-info text-dark p-2">
-                      Confirmed: {data?.statusCounts?.[OrderStatus.CONFIRMED] || 0}
+                      Confirmed: {statusCounts[OrderStatus.CONFIRMED] || 0}
                     </span>
                     <span className="badge bg-primary p-2">
-                      Renting: {data?.statusCounts?.[OrderStatus.RENTING] || 0}
+                      Renting: {statusCounts[OrderStatus.RENTING] || 0}
                     </span>
                     <span className="badge bg-success p-2">
-                      Returned: {data?.statusCounts?.[OrderStatus.RETURNED] || 0}
+                      Returned: {statusCounts[OrderStatus.RETURNED] || 0}
                     </span>
                     <span className="badge bg-secondary p-2">
-                      Cancelled: {data?.statusCounts?.[OrderStatus.CANCELLED] || 0}
+                      Cancelled: {statusCounts[OrderStatus.CANCELLED] || 0}
                     </span>
                   </div>
                 </Card>
               </Col>
             </Row>
           </>
+            );
+          })()
         )}
       </Container>
     </div>

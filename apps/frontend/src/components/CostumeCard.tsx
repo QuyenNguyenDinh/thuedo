@@ -1,7 +1,9 @@
-import React from 'react';
-import { Card, Badge, Button } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Card, Badge } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { Costume } from '../types';
+import { RatingBadge, getPseudoRating } from './RatingBadge';
+import { isInWishlist, toggleWishlist } from '../services/wishlist';
 
 interface CostumeCardProps {
   costume: Costume;
@@ -9,6 +11,18 @@ interface CostumeCardProps {
 }
 
 export const CostumeCard: React.FC<CostumeCardProps> = ({ costume, searchDates }) => {
+  const [saved, setSaved] = useState<boolean>(() => isInWishlist(costume.id));
+
+  useEffect(() => {
+    const handleWishlistChange = () => {
+      setSaved(isInWishlist(costume.id));
+    };
+    window.addEventListener('cosrent_wishlist_change', handleWishlistChange);
+    return () => {
+      window.removeEventListener('cosrent_wishlist_change', handleWishlistChange);
+    };
+  }, [costume.id]);
+
   const fallbackImg =
     'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=800';
 
@@ -16,9 +30,18 @@ export const CostumeCard: React.FC<CostumeCardProps> = ({ costume, searchDates }
     ? `/costumes/${costume.id}?startDate=${searchDates.startDate}&endDate=${searchDates.endDate}`
     : `/costumes/${costume.id}`;
 
+  const rating = getPseudoRating(costume.id);
+
+  const handleHeartClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const newState = toggleWishlist(costume.id);
+    setSaved(newState);
+  };
+
   return (
     <Card className="costume-card h-100 shadow-sm border-0 d-flex flex-column">
-      <div className="position-relative">
+      <div className="costume-card-img-wrapper">
         <Card.Img
           variant="top"
           src={costume.primaryImage || fallbackImg}
@@ -28,17 +51,37 @@ export const CostumeCard: React.FC<CostumeCardProps> = ({ costume, searchDates }
             (e.target as HTMLImageElement).src = fallbackImg;
           }}
         />
+
+        {/* Category Badge */}
         {costume.category && (
-          <Badge
-            bg="dark"
-            className="position-absolute top-0 start-0 m-2 px-2 py-1 bg-opacity-75"
-          >
+          <span className="card-category-badge">
             {costume.category.name}
-          </Badge>
+          </span>
         )}
+
+        {/* Wishlist Heart Button */}
+        <button
+          type="button"
+          className={`btn-wishlist ${saved ? 'active' : ''}`}
+          onClick={handleHeartClick}
+          aria-label={saved ? 'Bỏ lưu trang phục' : 'Lưu vào danh sách yêu thích'}
+          title={saved ? 'Bỏ lưu' : 'Lưu trang phục này'}
+        >
+          <i className={`bi ${saved ? 'bi-heart-fill' : 'bi-heart'}`}></i>
+        </button>
       </div>
 
       <Card.Body className="d-flex flex-column p-3">
+        {/* Rating Score Booking style */}
+        <div className="mb-2">
+          <RatingBadge
+            score={rating.score}
+            reviewCount={rating.reviewCount}
+            label={rating.label}
+            size="sm"
+          />
+        </div>
+
         <h6 className="fw-bold mb-1 text-truncate" title={costume.name}>
           {costume.name}
         </h6>
@@ -64,10 +107,17 @@ export const CostumeCard: React.FC<CostumeCardProps> = ({ costume, searchDates }
           )}
         </div>
 
+        {/* Guarantee micro tag */}
+        <div className="mb-2">
+          <small className="text-success" style={{ fontSize: '0.75rem', fontWeight: 500 }}>
+            <i className="bi bi-shield-check me-1"></i>Đã giặt hấp & thử tại quầy
+          </small>
+        </div>
+
         <div className="mt-auto pt-2 border-top">
           <div className="d-flex justify-content-between align-items-baseline mb-2">
             <div>
-              <span className="text-danger fw-bold fs-5">
+              <span className="fw-bold fs-5 text-dark">
                 {costume.dailyPrice.toLocaleString('vi-VN')} ₫
               </span>
               <small className="text-muted"> / ngày</small>

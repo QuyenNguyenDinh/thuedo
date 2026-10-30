@@ -88,21 +88,34 @@ export const RentalDetailPage: React.FC = () => {
     );
   }
 
+  const qrAmount = order.totalRentalFee;
+  const qrTransferContent = `COSR ${order.orderCode || order.id.slice(0, 8)}`;
+  const qrCodeUrl = `https://img.vietqr.io/image/MB-0988888888-compact2.png?amount=${qrAmount}&addInfo=${encodeURIComponent(qrTransferContent)}&accountName=COSRent%20Vietnam`;
+
   return (
     <div className="py-4">
       <Container>
         {/* Back link */}
-        <div className="mb-3">
+        <div className="d-flex justify-content-between align-items-center mb-3">
           <Link to="/my-rentals" className="text-decoration-none small text-muted">
             &larr; Quay lại danh sách đơn của tôi
           </Link>
+          <Button
+            variant="outline-secondary"
+            size="sm"
+            onClick={() => window.print()}
+            className="d-flex align-items-center gap-1"
+          >
+            <i className="bi bi-printer"></i>
+            <span>In phiếu giữ chỗ & QR</span>
+          </Button>
         </div>
 
         {/* Order Header */}
         <div className="d-flex flex-wrap justify-content-between align-items-center mb-4 bg-white p-3 rounded border shadow-sm">
           <div>
             <div className="d-flex align-items-center gap-2 mb-1">
-              <h4 className="fw-bold mb-0">{order.orderCode}</h4>
+              <h4 className="fw-bold mb-0 text-dark">{order.orderCode}</h4>
               <StatusBadge status={order.status} />
             </div>
             <small className="text-muted">
@@ -114,7 +127,7 @@ export const RentalDetailPage: React.FC = () => {
             </small>
           </div>
 
-          <div>
+          <div className="d-flex gap-2 align-items-center">
             {order.status === OrderStatus.PENDING && (
               <Button
                 variant="outline-danger"
@@ -134,13 +147,13 @@ export const RentalDetailPage: React.FC = () => {
           {/* Left Column: Items Snapshot & Pricing */}
           <Col lg={8}>
             <Card className="border-0 shadow-sm p-4 bg-white rounded mb-4">
-              <h5 className="fw-bold mb-3">
+              <h5 className="fw-bold mb-3 text-dark">
                 <i className="bi bi-receipt text-warning me-2"></i>Chi Tiết Mặt Hàng Thuê (Snapshot)
               </h5>
 
               <Table responsive className="align-middle mb-4">
                 <thead className="table-light">
-                  <tr className="small text-muted text-uppercase">
+                  <tr>
                     <th>Trang phục</th>
                     <th>Size</th>
                     <th>Đơn giá/ngày</th>
@@ -193,7 +206,7 @@ export const RentalDetailPage: React.FC = () => {
                 <hr className="my-2" />
                 <div className="d-flex justify-content-between">
                   <span className="fw-bold">Tổng thanh toán ban đầu tại quầy:</span>
-                  <span className="fw-bold text-danger fs-5">
+                  <span className="fw-bold text-primary fs-5">
                     {(order.totalRentalFee + order.totalDeposit).toLocaleString('vi-VN')} ₫
                   </span>
                 </div>
@@ -202,7 +215,7 @@ export const RentalDetailPage: React.FC = () => {
 
             {/* Status Histories Audit Trail */}
             <Card className="border-0 shadow-sm p-4 bg-white rounded">
-              <h5 className="fw-bold mb-3">
+              <h5 className="fw-bold mb-3 text-dark">
                 <i className="bi bi-clock-history text-warning me-2"></i>Lịch Sử Xử Lý Đơn Hàng
               </h5>
 
@@ -235,8 +248,37 @@ export const RentalDetailPage: React.FC = () => {
             </Card>
           </Col>
 
-          {/* Right Column: Customer Info & In-Store Notice */}
+          {/* Right Column: Customer Info & In-Store Notice & VietQR */}
           <Col lg={4}>
+            {/* VietQR Payment box if order is PENDING */}
+            {order.status === OrderStatus.PENDING && (
+              <Card className="border-0 shadow-sm p-4 bg-white rounded mb-4 border-top border-4 border-warning">
+                <div className="d-flex align-items-center justify-content-between mb-2">
+                  <h6 className="fw-bold text-dark mb-0">
+                    <i className="bi bi-qr-code-scan text-primary me-2"></i>Mã VietQR Thanh Toán
+                  </h6>
+                  <span className="badge bg-warning text-dark">Chờ thanh toán</span>
+                </div>
+                <p className="small text-muted mb-3">
+                  Quét mã QR qua app ngân hàng bất kỳ để hoàn tất tiền thuê và giữ chỗ ưu tiên:
+                </p>
+                <div className="text-center mb-3">
+                  <img
+                    src={qrCodeUrl}
+                    alt="Mã QR thanh toán đơn hàng"
+                    className="img-fluid border p-1 rounded"
+                    style={{ maxHeight: '170px' }}
+                  />
+                </div>
+                <div className="bg-light p-2 rounded small">
+                  <div><strong>Ngân hàng:</strong> MB Bank</div>
+                  <div><strong>Số tài khoản:</strong> <code>0988888888</code></div>
+                  <div><strong>Số tiền:</strong> <span className="text-danger fw-bold">{qrAmount.toLocaleString('vi-VN')} ₫</span></div>
+                  <div><strong>Nội dung:</strong> <code>{qrTransferContent}</code></div>
+                </div>
+              </Card>
+            )}
+
             <Card className="border-0 shadow-sm p-4 bg-white rounded mb-4">
               <h6 className="fw-bold mb-3 text-uppercase text-muted small">
                 Thông Tin Nhận Đồ Tại Cửa Hàng
@@ -258,7 +300,7 @@ export const RentalDetailPage: React.FC = () => {
               </div>
               {order.note && (
                 <div className="mb-2 small">
-                  <span className="text-muted d-block">Ghi chú của bạn:</span>
+                  <span className="text-muted d-block">Ghi chú & Phương thức thanh toán:</span>
                   <em>{order.note}</em>
                 </div>
               )}
@@ -315,4 +357,3 @@ export const RentalDetailPage: React.FC = () => {
     </div>
   );
 };
-

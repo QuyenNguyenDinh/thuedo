@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Row, Col, Form, Spinner, Alert, Pagination } from 'react-bootstrap';
-import { useSearchParams } from 'react-router-dom';
+import { Container, Row, Col, Form, Spinner, Alert, Pagination, Badge } from 'react-bootstrap';
+import { useSearchParams, Link } from 'react-router-dom';
 import api from '../services/api';
 import { Costume, Category } from '../types';
 import { SearchBar } from '../components/SearchBar';
 import { FilterSidebar } from '../components/FilterSidebar';
 import { CostumeCard } from '../components/CostumeCard';
+import { getWishlist } from '../services/wishlist';
 
 export const CostumeListPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -29,6 +30,7 @@ export const CostumeListPage: React.FC = () => {
   const sortBy = searchParams.get('sortBy') || 'createdAt_desc';
   const startDate = searchParams.get('startDate') || '';
   const endDate = searchParams.get('endDate') || '';
+  const savedOnly = searchParams.get('saved') === 'true';
 
   // Load categories
   useEffect(() => {
@@ -50,14 +52,30 @@ export const CostumeListPage: React.FC = () => {
         if (minPrice) params.set('minPrice', minPrice);
         if (maxPrice) params.set('maxPrice', maxPrice);
         if (sortBy) params.set('sortBy', sortBy);
-        params.set('page', String(page));
-        params.set('limit', '12');
+
+        // If saved only, request more items to filter locally
+        if (savedOnly) {
+          params.set('limit', '50');
+        } else {
+          params.set('page', String(page));
+          params.set('limit', '12');
+        }
 
         const res: any = await api.get(`/costumes?${params.toString()}`);
         const data = res.data || res;
-        setCostumes(data.items || []);
-        setTotal(data.meta?.total || 0);
-        setTotalPages(data.meta?.totalPages || 1);
+        let items: Costume[] = data.items || [];
+
+        if (savedOnly) {
+          const wishlist = getWishlist();
+          items = items.filter((item) => wishlist.includes(item.id));
+          setCostumes(items);
+          setTotal(items.length);
+          setTotalPages(1);
+        } else {
+          setCostumes(items);
+          setTotal(data.meta?.total || 0);
+          setTotalPages(data.meta?.totalPages || 1);
+        }
       } catch (err: any) {
         setError(err.response?.data?.message || 'Không thể tải danh sách trang phục.');
       } finally {
@@ -66,7 +84,7 @@ export const CostumeListPage: React.FC = () => {
     };
 
     fetchCostumes();
-  }, [searchParams, page]);
+  }, [searchParams, page, savedOnly]);
 
   const updateParam = (key: string, value: string) => {
     const next = new URLSearchParams(searchParams);
@@ -132,13 +150,27 @@ export const CostumeListPage: React.FC = () => {
           <Col lg={9} md={8}>
             <div className="d-flex justify-content-between align-items-center mb-3 bg-white p-3 rounded border shadow-sm">
               <div>
-                <h5 className="fw-bold mb-0">Kết quả tìm kiếm</h5>
+                <div className="d-flex align-items-center gap-2">
+                  <h5 className="fw-bold mb-0">
+                    {savedOnly ? 'Trang phục đã lưu yêu thích' : 'Kết quả tìm kiếm'}
+                  </h5>
+                  {savedOnly && (
+                    <Badge bg="danger" className="rounded-pill">
+                      Yêu thích
+                    </Badge>
+                  )}
+                </div>
                 <small className="text-muted">
                   Tìm thấy <strong>{total}</strong> trang phục phù hợp
                 </small>
               </div>
 
               <div className="d-flex align-items-center gap-2">
+                {savedOnly && (
+                  <Link to="/costumes" className="btn btn-outline-secondary btn-sm me-2">
+                    Xem tất cả trang phục
+                  </Link>
+                )}
                 <small className="text-muted text-nowrap">Sắp xếp:</small>
                 <Form.Select
                   size="sm"
@@ -163,23 +195,29 @@ export const CostumeListPage: React.FC = () => {
             ) : costumes.length === 0 ? (
               <div className="text-center py-5 bg-white rounded border shadow-sm p-4">
                 <i className="bi bi-emoji-neutral fs-1 text-muted d-block mb-2"></i>
-                <h5 className="fw-bold">Không tìm thấy trang phục phù hợp</h5>
+                <h5 className="fw-bold">
+                  {savedOnly
+                    ? 'Bạn chưa lưu trang phục nào vào danh sách yêu thích'
+                    : 'Không tìm thấy trang phục phù hợp'}
+                </h5>
                 <p className="text-muted small">
-                  Hãy thử thay đổi từ khóa tìm kiếm hoặc mở rộng khoảng giá và kích cỡ.
+                  {savedOnly
+                    ? 'Hãy bấm vào biểu tượng trái tim trên các thẻ trang phục để lưu lại khi xem.'
+                    : 'Hãy thử thay đổi từ khóa tìm kiếm hoặc mở rộng khoảng giá và kích cỡ.'}
                 </p>
                 <button
                   type="button"
                   className="btn btn-primary btn-sm"
                   onClick={handleResetFilters}
                 >
-                  Xóa toàn bộ bộ lọc
+                  {savedOnly ? 'Khám phá trang phục ngay' : 'Xóa toàn bộ bộ lọc'}
                 </button>
               </div>
             ) : (
               <>
                 <Row className="g-3">
                   {costumes.map((costume) => (
-                    <Col lg={4} sm={6} key={costume.id}>
+                    <Col lg={4} md={6} sm={6} key={costume.id}>
                       <CostumeCard
                         costume={costume}
                         searchDates={{ startDate, endDate }}
@@ -189,25 +227,34 @@ export const CostumeListPage: React.FC = () => {
                 </Row>
 
                 {/* Pagination */}
-                {totalPages > 1 && (
+                {!savedOnly && totalPages > 1 && (
                   <div className="d-flex justify-content-center mt-4">
                     <Pagination>
                       <Pagination.Prev
                         disabled={page <= 1}
-                        onClick={() => setPage(page - 1)}
+                        onClick={() => {
+                          setPage((p) => Math.max(1, p - 1));
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
                       />
-                      {Array.from({ length: totalPages }).map((_, i) => (
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
                         <Pagination.Item
-                          key={i + 1}
-                          active={i + 1 === page}
-                          onClick={() => setPage(i + 1)}
+                          key={p}
+                          active={p === page}
+                          onClick={() => {
+                            setPage(p);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
                         >
-                          {i + 1}
+                          {p}
                         </Pagination.Item>
                       ))}
                       <Pagination.Next
                         disabled={page >= totalPages}
-                        onClick={() => setPage(page + 1)}
+                        onClick={() => {
+                          setPage((p) => Math.min(totalPages, p + 1));
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
                       />
                     </Pagination>
                   </div>
@@ -220,4 +267,3 @@ export const CostumeListPage: React.FC = () => {
     </div>
   );
 };
-

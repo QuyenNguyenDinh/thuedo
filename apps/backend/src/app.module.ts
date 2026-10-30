@@ -45,16 +45,57 @@ import { AdminModule } from './modules/admin/admin.module';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        type: 'postgres',
-        host: config.get<string>('DB_HOST', 'localhost'),
-        port: parseInt(config.get<string>('DB_PORT', '5432'), 10),
-        username: config.get<string>('DB_USERNAME', 'postgres'),
-        password: config.get<string>('DB_PASSWORD', 'postgres_password_example'),
-        database: config.get<string>('DB_DATABASE', 'cosrent_db'),
-        autoLoadEntities: true,
-        synchronize: false, // Strict migration requirement
-      }),
+      useFactory: (config: ConfigService) => {
+        const dbUrl = config.get<string>('DATABASE_URL');
+        let host = config.get<string>('DB_HOST', 'localhost');
+        let port = parseInt(config.get<string>('DB_PORT', '5432'), 10);
+        let username = config.get<string>('DB_USERNAME', 'postgres');
+        let password = config.get<string>('DB_PASSWORD', 'postgres_password_example');
+        let database = config.get<string>('DB_DATABASE', 'cosrent_db');
+
+        if (dbUrl) {
+          try {
+            const parsed = new URL(dbUrl);
+            host = parsed.hostname || host;
+            port = parsed.port ? parseInt(parsed.port, 10) : port;
+            username = parsed.username || username;
+            password = decodeURIComponent(parsed.password || password);
+            database = (parsed.pathname ? parsed.pathname.slice(1) : database) || database;
+          } catch (e) {
+            // fallback
+          }
+        }
+
+        const isCloudDb =
+          config.get<string>('DB_SSL') === 'true' ||
+          (dbUrl &&
+            (dbUrl.includes('neon.tech') ||
+              dbUrl.includes('supabase.co') ||
+              dbUrl.includes('render.com') ||
+              dbUrl.includes('railway.app') ||
+              dbUrl.includes('aivencloud.com') ||
+              dbUrl.includes('aiven.io') ||
+              dbUrl.includes('sslmode=require'))) ||
+          host.includes('neon.tech') ||
+          host.includes('supabase.co') ||
+          host.includes('render.com') ||
+          host.includes('railway.app') ||
+          host.includes('aivencloud.com') ||
+          host.includes('aiven.io');
+
+        return {
+          type: 'postgres',
+          host,
+          port,
+          username,
+          password,
+          database,
+          ssl: isCloudDb ? { rejectUnauthorized: false } : false,
+          extra: isCloudDb ? { ssl: { rejectUnauthorized: false } } : undefined,
+          autoLoadEntities: true,
+          synchronize: false, // Strict migration requirement
+        };
+      },
       dataSourceFactory: async (options) => {
         const anyOptions = options as any;
         const dbHost = process.env.DB_HOST || anyOptions?.host;

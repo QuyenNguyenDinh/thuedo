@@ -3,10 +3,14 @@
   --secondary-navy: #00224f;
   --accent-gold: #febb02;
   --accent-gold-hover: #e5a802;
-  --body-bg: #f5f7fa;
+  --booking-blue: #006ce4;
+  --booking-light-blue: #f0f6ff;
+  --body-bg: #f4f6fa;
   --text-dark: #1a1a1a;
   --text-muted: #595959;
-  --border-color: #e7e7e7;
+  --border-color: #e5e9f0;
+  --card-shadow: 0 4px 14px rgba(0, 34, 79, 0.06);
+  --card-hover-shadow: 0 10px 28px rgba(0, 34, 79, 0.12);
 }
 
 body {
@@ -24,7 +28,7 @@ body {
 }
 
 .brand-logo {
-  font-size: 1.5rem;
+  font-size: 1.55rem;
   font-weight: 800;
   letter-spacing: -0.5px;
   color: white !important;
@@ -40,77 +44,188 @@ body {
   background-color: white;
   border: 4px solid var(--accent-gold);
   border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  padding: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16);
+  padding: 6px;
 }
 
 .booking-search-input {
   border: none;
-  border-right: 1px solid #ddd;
+  border-right: 1px solid #e7e7e7;
   border-radius: 0;
-  padding: 12px 14px;
+  padding: 10px 14px;
   font-size: 0.95rem;
 }
 
 .booking-search-input:focus {
   outline: none;
   box-shadow: none;
-  background-color: #fffef5;
+  background-color: #fffef7;
 }
 
 .btn-search-gold {
   background-color: var(--accent-gold);
-  color: #000;
+  color: #1a1a1a;
   font-weight: 700;
   border: none;
   padding: 12px 24px;
   font-size: 1rem;
   border-radius: 4px;
-  transition: background-color 0.15s ease-in-out;
+  transition: all 0.2s ease;
 }
 
 .btn-search-gold:hover {
   background-color: var(--accent-gold-hover);
   color: #000;
+  transform: translateY(-1px);
+}
+
+/* Quick filter pills under search */
+.quick-filter-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.quick-filter-pill {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+}
+
+.quick-filter-pill:hover,
+.quick-filter-pill.active {
+  background: white;
+  color: var(--primary-navy);
+  border-color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Booking Rating Pill (The iconic square with rounded corner) */
+.booking-rating-pill {
+  background: var(--primary-navy);
+  color: white;
+  font-weight: 700;
+  font-size: 0.82rem;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 6px;
+  border-radius: 6px 6px 6px 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.booking-rating-pill-lg {
+  background: var(--primary-navy);
+  color: white;
+  font-weight: 800;
+  font-size: 1.25rem;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px 8px 8px 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Costume Cards */
 .costume-card {
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: 10px;
   background-color: white;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  box-shadow: var(--card-shadow);
   overflow: hidden;
 }
 
 .costume-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  transform: translateY(-5px);
+  box-shadow: var(--card-hover-shadow);
+  border-color: #90b8f0;
+}
+
+.costume-card-img-wrapper {
+  position: relative;
+  height: 230px;
+  background-color: #f1f3f7;
+  overflow: hidden;
 }
 
 .costume-card-img {
-  height: 240px;
-  object-fit: cover;
+  height: 100%;
   width: 100%;
-  background-color: #eee;
+  object-fit: cover;
+  transition: transform 0.35s ease;
 }
 
-.badge-gold {
-  background-color: #fff8e1;
-  color: #b78103;
-  border: 1px solid #ffe082;
+.costume-card:hover .costume-card-img {
+  transform: scale(1.05);
+}
+
+/* Wishlist heart button */
+.btn-wishlist {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 3;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.btn-wishlist:hover {
+  background: white;
+  transform: scale(1.1);
+  color: #dc3545;
+}
+
+.btn-wishlist.active {
+  color: #dc3545;
+}
+
+/* Category Badge on card */
+.card-category-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(0, 34, 79, 0.88);
+  color: white;
+  font-size: 0.72rem;
   font-weight: 600;
+  padding: 4px 9px;
+  border-radius: 14px;
+  backdrop-filter: blur(4px);
+  z-index: 2;
 }
 
 /* Sidebar filter */
 .filter-card {
   background-color: white;
   border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 16px;
+  border-radius: 10px;
+  padding: 18px;
+  box-shadow: var(--card-shadow);
 }
 
-/* Category Booking.com Showcase Cards */
+/* Category Booking Showcase Cards */
 .category-card {
   border: 1px solid var(--border-color);
   border-radius: 10px;
@@ -122,11 +237,12 @@ body {
   display: flex;
   flex-direction: column;
   height: 100%;
+  box-shadow: var(--card-shadow);
 }
 
 .category-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 10px 24px rgba(0, 53, 128, 0.14);
+  box-shadow: var(--card-hover-shadow);
   border-color: #90b8f0;
 }
 
@@ -218,3 +334,393 @@ body {
   color: #6c757d;
 }
 
+/* Urgency Pulsing Badge */
+.urgency-badge {
+  background: #fff0f0;
+  color: #d9381e;
+  border: 1px solid #ffccd0;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  animation: pulse-soft 2s infinite;
+}
+
+@keyframes pulse-soft {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.015); }
+  100% { transform: scale(1); }
+}
+
+/* Trust cards / Value proposition */
+.trust-card {
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 20px 16px;
+  text-align: center;
+  transition: all 0.2s ease;
+  height: 100%;
+}
+
+.trust-card:hover {
+  border-color: #003580;
+  box-shadow: var(--card-hover-shadow);
+}
+
+.trust-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #f0f6ff;
+  color: var(--primary-navy);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  margin-bottom: 12px;
+}
+
+/* Photo Gallery Grid Booking style */
+.photo-gallery-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  grid-gap: 8px;
+  border-radius: 10px;
+  overflow: hidden;
+  height: 380px;
+}
+
+.photo-gallery-main {
+  height: 100%;
+  position: relative;
+  cursor: pointer;
+}
+
+.photo-gallery-main img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 0.2s ease;
+}
+
+.photo-gallery-thumbs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-gap: 8px;
+  height: 100%;
+}
+
+.photo-gallery-thumb {
+  height: 100%;
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.photo-gallery-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.photo-gallery-thumb:hover img {
+  transform: scale(1.08);
+}
+
+@media (max-width: 768px) {
+  .photo-gallery-grid {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  .photo-gallery-main {
+    height: 260px;
+  }
+  .photo-gallery-thumbs {
+    height: 120px;
+  }
+}
+
+/* Accessory checklist items */
+.accessory-badge {
+  background: #f0f7f2;
+  border: 1px solid #d1ebd8;
+  color: #1e7e34;
+  font-weight: 500;
+  font-size: 0.85rem;
+  padding: 8px 12px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+}
+
+
+/* ========================================================
+   ANIMATED HERO CAROUSEL BANNER (Booking.com & Shopee Style)
+   ======================================================== */
+.hero-carousel-section {
+  position: relative;
+  background-color: var(--secondary-navy);
+  overflow: hidden;
+}
+
+.hero-carousel-item {
+  position: relative;
+  min-height: 480px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  text-align: center;
+}
+
+.hero-carousel-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center center;
+  transform: scale(1.08);
+  transition: transform 7s cubic-bezier(0.25, 1, 0.5, 1);
+  will-change: transform;
+}
+
+.carousel-item.active .hero-carousel-bg {
+  transform: scale(1);
+}
+
+.hero-carousel-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 24, 58, 0.82) 0%,
+    rgba(0, 34, 79, 0.88) 50%,
+    rgba(0, 18, 45, 0.96) 100%
+  );
+}
+
+.hero-carousel-content {
+  position: relative;
+  z-index: 2;
+  padding: 48px 20px 72px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.hero-carousel-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(254, 187, 2, 0.16);
+  border: 1px solid rgba(254, 187, 2, 0.45);
+  color: var(--accent-gold);
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+  padding: 6px 18px;
+  border-radius: 50px;
+  backdrop-filter: blur(8px);
+  margin-bottom: 16px;
+  animation: fadeInDown 0.6s ease;
+}
+
+.hero-carousel-title {
+  color: #ffffff;
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1.25;
+  margin-bottom: 16px;
+  letter-spacing: -0.5px;
+  text-shadow: 0 3px 12px rgba(0, 0, 0, 0.4);
+  animation: fadeInUp 0.7s ease;
+}
+
+@media (max-width: 768px) {
+  .hero-carousel-item {
+    min-height: 420px;
+  }
+  .hero-carousel-title {
+    font-size: 1.65rem;
+  }
+  .hero-carousel-content {
+    padding: 36px 15px 65px;
+  }
+}
+
+.hero-carousel-desc {
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 1.05rem;
+  line-height: 1.6;
+  margin-bottom: 20px;
+  max-width: 780px;
+  margin-left: auto;
+  margin-right: auto;
+  animation: fadeInUp 0.8s ease;
+}
+
+.hero-carousel-perks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.hero-carousel-perk {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 5px 14px;
+  border-radius: 20px;
+  backdrop-filter: blur(6px);
+}
+
+.hero-carousel-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.hero-carousel-btn-primary {
+  background-color: var(--accent-gold);
+  color: #00224f !important;
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 10px 24px;
+  border-radius: 6px;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(254, 187, 2, 0.35);
+  transition: all 0.25s ease;
+}
+
+.hero-carousel-btn-primary:hover {
+  background-color: var(--accent-gold-hover);
+  color: #001533 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(254, 187, 2, 0.45);
+}
+
+.hero-carousel-btn-secondary {
+  background-color: rgba(255, 255, 255, 0.12);
+  color: #ffffff !important;
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 10px 20px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  backdrop-filter: blur(6px);
+  transition: all 0.25s ease;
+}
+
+.hero-carousel-btn-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.6);
+  color: #ffffff !important;
+}
+
+/* Custom Controls & Indicators for Carousel */
+.hero-carousel .carousel-indicators {
+  margin-bottom: 28px;
+}
+
+.hero-carousel .carousel-indicators [data-bs-target] {
+  width: 32px;
+  height: 5px;
+  border-radius: 3px;
+  background-color: rgba(255, 255, 255, 0.45);
+  border: none;
+  margin: 0 4px;
+  transition: all 0.35s ease;
+}
+
+.hero-carousel .carousel-indicators .active {
+  background-color: var(--accent-gold);
+  width: 52px;
+}
+
+.hero-carousel .carousel-control-prev,
+.hero-carousel .carousel-control-next {
+  width: 50px;
+  opacity: 0.6;
+  transition: opacity 0.25s ease;
+}
+
+.hero-carousel .carousel-control-prev:hover,
+.hero-carousel .carousel-control-next:hover {
+  opacity: 1;
+}
+
+.hero-carousel-ctrl-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(0, 34, 79, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.2rem;
+  backdrop-filter: blur(4px);
+  transition: all 0.2s ease;
+}
+
+.hero-carousel-ctrl-btn:hover {
+  background: var(--primary-navy);
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+  transform: scale(1.08);
+}
+
+/* Search Bar Wrapper overlapping Carousel */
+.hero-search-wrapper {
+  position: relative;
+  z-index: 10;
+  margin-top: -38px;
+  padding-bottom: 24px;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

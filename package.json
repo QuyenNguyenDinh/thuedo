@@ -12,6 +12,7 @@
     "npm": ">=9.0.0"
   },
   "scripts": {
+    "dev": "concurrently -n \"BACKEND,FRONTEND\" -c \"blue,green\" \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "npm run start:dev --workspace=apps/backend",
     "dev:frontend": "npm run dev --workspace=apps/frontend",
     "build:backend": "npm run build --workspace=apps/backend",
@@ -33,6 +34,8 @@
     "postgresql"
   ],
   "author": "[CẦN BỔ SUNG: Họ tên sinh viên]",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^10.0.6"
+  }
 }
-

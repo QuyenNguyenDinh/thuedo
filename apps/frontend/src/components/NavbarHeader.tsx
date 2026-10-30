@@ -1,11 +1,24 @@
-import React from 'react';
-import { Navbar, Nav, Container, Button, Dropdown } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Navbar, Nav, Container, Dropdown } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getWishlist } from '../services/wishlist';
 
 export const NavbarHeader: React.FC = () => {
   const { user, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
+
+  const [wishlistCount, setWishlistCount] = useState<number>(() => getWishlist().length);
+
+  useEffect(() => {
+    const handleWishlistChange = () => {
+      setWishlistCount(getWishlist().length);
+    };
+    window.addEventListener('cosrent_wishlist_change', handleWishlistChange);
+    return () => {
+      window.removeEventListener('cosrent_wishlist_change', handleWishlistChange);
+    };
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -25,6 +38,14 @@ export const NavbarHeader: React.FC = () => {
           <Nav className="me-auto ms-lg-4">
             <Nav.Link as={Link} to="/costumes" className="text-white fw-semibold">
               <i className="bi bi-grid-fill me-1 text-warning"></i> Danh sách trang phục
+            </Nav.Link>
+            <Nav.Link as={Link} to="/costumes?saved=true" className="text-white fw-semibold">
+              <i className="bi bi-heart-fill me-1 text-danger"></i> Đã lưu
+              {wishlistCount > 0 && (
+                <span className="badge rounded-pill bg-warning text-dark ms-1" style={{ fontSize: '0.72rem' }}>
+                  {wishlistCount}
+                </span>
+              )}
             </Nav.Link>
             {user && !isAdmin && (
               <Nav.Link as={Link} to="/my-rentals" className="text-white fw-semibold">
@@ -73,6 +94,9 @@ export const NavbarHeader: React.FC = () => {
                   </div>
                   <Dropdown.Item as={Link} to="/profile" className="py-2">
                     <i className="bi bi-person-lines-fill me-2 text-secondary"></i> Hồ sơ cá nhân
+                  </Dropdown.Item>
+                  <Dropdown.Item as={Link} to="/costumes?saved=true" className="py-2">
+                    <i className="bi bi-heart me-2 text-danger"></i> Trang phục đã lưu ({wishlistCount})
                   </Dropdown.Item>
                   {!isAdmin && (
                     <Dropdown.Item as={Link} to="/my-rentals" className="py-2">

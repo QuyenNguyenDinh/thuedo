@@ -30,6 +30,7 @@ export const CheckoutPage: React.FC = () => {
   const [payOption, setPayOption] = useState<'rent_only' | 'full'>('rent_only');
   const [showPaymentSuccessModal, setShowPaymentSuccessModal] = useState<boolean>(false);
   const [createdOrderId, setCreatedOrderId] = useState<string>('');
+  const [createdOrderCode, setCreatedOrderCode] = useState<string>('');
   const [copiedBank, setCopiedBank] = useState<boolean>(false);
   const [copiedAmount, setCopiedAmount] = useState<boolean>(false);
   const [copiedContent, setCopiedContent] = useState<boolean>(false);
@@ -88,7 +89,12 @@ export const CheckoutPage: React.FC = () => {
   }
 
   if (!user) {
-    return <Navigate to={`/login?redirect=${encodeURIComponent(window.location.search)}`} replace />;
+    return (
+      <Navigate
+        to={`/login?redirect=${encodeURIComponent(`/checkout${window.location.search}`)}`}
+        replace
+      />
+    );
   }
 
   if (!variantId || !costumeId) {
@@ -111,11 +117,14 @@ export const CheckoutPage: React.FC = () => {
       : quote.totalDueAtStore
     : 0;
 
-  const transferContent = `COSR ${customerPhone ? customerPhone.slice(-6) : 'RENT'}`;
+  // Sau khi tạo đơn, dùng mã đơn làm nội dung chuyển khoản để quản trị viên đối soát chính xác
+  const transferContent = createdOrderCode
+    ? `COSR ${createdOrderCode}`
+    : `COSR ${customerPhone ? customerPhone.slice(-6) : 'RENT'}`;
   const qrCodeUrl = `https://img.vietqr.io/image/MB-0988888888-compact2.png?amount=${payAmount}&addInfo=${encodeURIComponent(transferContent)}&accountName=COSRent%20Vietnam`;
 
   const copyToClipboard = (text: string, type: 'bank' | 'amount' | 'content') => {
-    navigator.clipboard.writeText(text);
+    navigator.clipboard?.writeText(text).catch(() => undefined);
     if (type === 'bank') {
       setCopiedBank(true);
       setTimeout(() => setCopiedBank(false), 2000);
@@ -160,6 +169,7 @@ export const CheckoutPage: React.FC = () => {
       const res: any = await api.post('/rentals', payload);
       const createdOrder = res.data || res;
       setCreatedOrderId(createdOrder.id);
+      setCreatedOrderCode(createdOrder.orderCode || '');
 
       if (paymentMethod === 'vietqr' || paymentMethod === 'momo') {
         setShowPaymentSuccessModal(true);

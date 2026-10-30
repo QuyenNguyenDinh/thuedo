@@ -1,12 +1,23 @@
 import React from 'react';
 import { Badge } from 'react-bootstrap';
 import { OrderStatus } from '../types';
+import { getToday } from '../utils/date';
 
 interface StatusBadgeProps {
   status: OrderStatus;
+  /** Ngày trả dự kiến (YYYY-MM-DD); truyền vào để cảnh báo đơn đang thuê đã quá hạn. */
+  endDate?: string;
 }
 
-export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
+export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, endDate }) => {
+  if (status === OrderStatus.RENTING && endDate && endDate < getToday()) {
+    return (
+      <Badge bg="danger" className="px-2 py-1">
+        <i className="bi bi-exclamation-triangle-fill me-1"></i> Quá hạn trả đồ
+      </Badge>
+    );
+  }
+
   switch (status) {
     case OrderStatus.PENDING:
       return (

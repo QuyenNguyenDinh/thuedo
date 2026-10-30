@@ -55,6 +55,11 @@ export class PricingService {
         throw new BadRequestException('Ngày nhận đồ không được ở trong quá khứ.');
       }
       rentalDays = DateUtil.calculateRentalDays(startDate, endDate);
+      if (rentalDays > DateUtil.MAX_RENTAL_DAYS) {
+        throw new BadRequestException(
+          `Thời gian thuê tối đa là ${DateUtil.MAX_RENTAL_DAYS} ngày cho mỗi đơn.`,
+        );
+      }
     } catch (err: any) {
       if (err instanceof BadRequestException) throw err;
       throw new BadRequestException(err.message || 'Khoảng ngày thuê không hợp lệ.');

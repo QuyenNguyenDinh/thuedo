@@ -57,6 +57,12 @@ api.interceptors.response.use(
     return response;
   },
   async (error: AxiosError) => {
+    // ValidationPipe trả về message dạng mảng: gộp thành một chuỗi để các trang hiển thị gọn
+    const errData = error.response?.data as { message?: unknown } | undefined;
+    if (errData && Array.isArray(errData.message)) {
+      errData.message = errData.message.join(' ');
+    }
+
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
     // If 401 Unauthorized and not already refreshing and not auth endpoints
@@ -85,7 +91,7 @@ api.interceptors.response.use(
 
       try {
         const refreshRes = await axios.post(
-          '/api/v1/auth/refresh',
+          `${apiBase}/auth/refresh`,
           {},
           { withCredentials: true },
         );

@@ -158,7 +158,7 @@ export const MyRentalsPage: React.FC = () => {
                     </small>
                   </div>
                   <div>
-                    <StatusBadge status={order.status} />
+                    <StatusBadge status={order.status} endDate={order.endDate} />
                   </div>
                 </div>
 

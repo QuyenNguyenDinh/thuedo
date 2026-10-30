@@ -116,7 +116,7 @@ export const RentalDetailPage: React.FC = () => {
           <div>
             <div className="d-flex align-items-center gap-2 mb-1">
               <h4 className="fw-bold mb-0 text-dark">{order.orderCode}</h4>
-              <StatusBadge status={order.status} />
+              <StatusBadge status={order.status} endDate={order.endDate} />
             </div>
             <small className="text-muted">
               Ngày tạo đơn:{' '}

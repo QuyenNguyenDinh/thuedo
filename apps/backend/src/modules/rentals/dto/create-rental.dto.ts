@@ -1,10 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  ArrayMaxSize,
   IsArray,
   IsNotEmpty,
   IsOptional,
   IsString,
   Matches,
+  MaxLength,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -14,6 +16,7 @@ export class CreateRentalDto {
   @ApiProperty({ example: 'Nguyễn Văn A', description: 'Tên người nhận đồ tại quầy' })
   @IsString()
   @IsNotEmpty({ message: 'Tên người nhận không được để trống.' })
+  @MaxLength(255, { message: 'Tên người nhận tối đa 255 ký tự.' })
   customerName: string;
 
   @ApiProperty({ example: '0912345678', description: 'Số điện thoại liên hệ nhận đồ' })
@@ -26,6 +29,7 @@ export class CreateRentalDto {
   @ApiPropertyOptional({ example: 'Nhận đồ lúc 14h chiều' })
   @IsString()
   @IsOptional()
+  @MaxLength(1000, { message: 'Ghi chú tối đa 1000 ký tự.' })
   note?: string;
 
   @ApiProperty({ example: '2026-11-10', description: 'Ngày nhận trang phục (YYYY-MM-DD)' })
@@ -40,6 +44,7 @@ export class CreateRentalDto {
 
   @ApiProperty({ type: [QuoteItemDto] })
   @IsArray()
+  @ArrayMaxSize(20, { message: 'Mỗi đơn tối đa 20 mặt hàng.' })
   @ValidateNested({ each: true })
   @Type(() => QuoteItemDto)
   items: QuoteItemDto[];

@@ -16,6 +16,7 @@ import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom'
 import api from '../services/api';
 import { Costume, CostumeVariant, AvailabilityResult, CalculatedQuote } from '../types';
 import { useAuth } from '../context/AuthContext';
+import { getToday, getDayOffset } from '../utils/date';
 import { RatingBadge, getPseudoRating } from '../components/RatingBadge';
 import { isInWishlist, toggleWishlist } from '../services/wishlist';
 
@@ -38,13 +39,6 @@ export const CostumeDetailPage: React.FC = () => {
 
   // Booking selections
   const [selectedVariant, setSelectedVariant] = useState<CostumeVariant | null>(null);
-
-  const getToday = () => new Date().toISOString().split('T')[0];
-  const getDayOffset = (days: number) => {
-    const d = new Date();
-    d.setDate(d.getDate() + days);
-    return d.toISOString().split('T')[0];
-  };
 
   const [startDate, setStartDate] = useState<string>(
     searchParams.get('startDate') || getToday(),

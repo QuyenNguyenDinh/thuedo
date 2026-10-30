@@ -301,7 +301,7 @@ export const AdminRentalsPage: React.FC = () => {
                         {order.totalDeposit.toLocaleString('vi-VN')} ₫
                       </td>
                       <td>
-                        <StatusBadge status={order.status} />
+                        <StatusBadge status={order.status} endDate={order.endDate} />
                       </td>
                       <td className="text-end text-nowrap">
                         {order.status === OrderStatus.PENDING && (

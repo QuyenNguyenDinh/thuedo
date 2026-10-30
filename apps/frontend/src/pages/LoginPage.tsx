@@ -13,7 +13,10 @@ export const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const redirectUrl = searchParams.get('redirect') || '/';
+  // Chỉ chấp nhận đường dẫn nội bộ để tránh open redirect (vd: ?redirect=//evil.com)
+  const rawRedirect = searchParams.get('redirect') || '/';
+  const redirectUrl =
+    rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') ? rawRedirect : '/';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

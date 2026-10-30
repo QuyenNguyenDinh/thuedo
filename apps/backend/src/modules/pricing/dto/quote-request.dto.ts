@@ -1,11 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
+  ArrayMaxSize,
   IsArray,
   IsInt,
   IsNotEmpty,
   IsString,
   IsUUID,
   Matches,
+  Max,
   Min,
   ValidateNested,
 } from 'class-validator';
@@ -20,6 +22,7 @@ export class QuoteItemDto {
   @ApiProperty({ example: 1, default: 1 })
   @IsInt()
   @Min(1, { message: 'Số lượng phải lớn hơn hoặc bằng 1.' })
+  @Max(20, { message: 'Số lượng mỗi kích cỡ tối đa là 20 bộ.' })
   quantity: number;
 }
 
@@ -36,6 +39,7 @@ export class RentalQuoteRequestDto {
 
   @ApiProperty({ type: [QuoteItemDto] })
   @IsArray()
+  @ArrayMaxSize(20, { message: 'Mỗi đơn tối đa 20 mặt hàng.' })
   @ValidateNested({ each: true })
   @Type(() => QuoteItemDto)
   items: QuoteItemDto[];

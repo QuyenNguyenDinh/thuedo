@@ -7,6 +7,9 @@
  */
 
 export class DateUtil {
+  /** Số ngày thuê tối đa cho một đơn (chặn khoảng ngày quá dài gây quá tải vòng lặp tính tồn kho). */
+  static readonly MAX_RENTAL_DAYS = 30;
+
   /**
    * Parse a YYYY-MM-DD string into [year, month, day] integers.
    */

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Form, Button, Row, Col } from 'react-bootstrap';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { getToday, getDayOffset } from '../utils/date';
 
 interface SearchBarProps {
   initialKeyword?: string;
@@ -17,18 +18,6 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-
-  // Format today as YYYY-MM-DD in Vietnam time
-  const getToday = () => {
-    const d = new Date();
-    return d.toISOString().split('T')[0];
-  };
-
-  const getDayOffset = (days: number) => {
-    const d = new Date();
-    d.setDate(d.getDate() + days);
-    return d.toISOString().split('T')[0];
-  };
 
   const [keyword, setKeyword] = useState<string>(
     initialKeyword || searchParams.get('keyword') || '',
